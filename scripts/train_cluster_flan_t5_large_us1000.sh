@@ -157,7 +157,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=64
+      BATCH_SIZE=128
       GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
