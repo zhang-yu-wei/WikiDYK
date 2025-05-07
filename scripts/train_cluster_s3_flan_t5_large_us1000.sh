@@ -10,6 +10,9 @@ DATA_PATHS=(
     "data/scope_clf_data/semantic_3_clusters_0.json"
     "data/scope_clf_data/semantic_3_clusters_1.json"
     "data/scope_clf_data/semantic_3_clusters_2.json"
+    "data/scope_clf_data/temporal_3_clusters_0.json"
+    "data/scope_clf_data/temporal_3_clusters_1.json"
+    "data/scope_clf_data/temporal_3_clusters_2.json"
 )
 OUTPUT_DIR="train_results"
 BATCH_SIZE=32
@@ -75,7 +78,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   for DATA_PATH in "${DATA_PATHS[@]}"; do
   
     # Create model-specific output directory
-    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}"
+    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}_$(basename "$DATA_PATH" ".json")"
 
     # Add ds_size to directory name if specified
     # if -1 then add full dataset size

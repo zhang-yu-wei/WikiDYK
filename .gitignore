@@ -1,7 +1,7 @@
 *results*/
 wandb/
 *data*/
-run_script.sh
+*run_script*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
