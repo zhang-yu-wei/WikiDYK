@@ -3,6 +3,8 @@ import os
 import re
 import uuid
 import argparse
+from copy import deepcopy
+from collections import defaultdict
 from datasets import Dataset, DatasetDict
 import random
 random.seed(42)
@@ -54,7 +56,7 @@ def cluster_facts(facts, n_clusters=10):
     # return cluster index of each fact
     return labels
 
-def group_facts_by_semantic(input_data, n_clusters=10):
+def group_facts_by_semantic(input_data, n_clusters=10):    
     # Extract facts from input data
     facts = [item['fact'] for item in input_data]
 
@@ -90,20 +92,26 @@ def main(args):
     with open(args.input_file, 'r') as f:
         data = json.load(f)
     
-    if args.cluster_type == 'semantic':
-        clustered_data = group_facts_by_semantic(data, args.n_clusters)
-    
-    elif args.cluster_type == 'temporal':
-        clustered_data = group_facts_by_temporal(data, args.n_clusters)
+    if args.n_clusters == 1:
+        # if n_clusters is 1, just return the data as is
+        clustered_data = {0: data}
+    else:
+        if args.cluster_type == 'semantic':
+            clustered_data = group_facts_by_semantic(data, args.n_clusters)
+        
+        elif args.cluster_type == 'temporal':
+            clustered_data = group_facts_by_temporal(data, args.n_clusters)
     
     # include additional negative data
     with open(args.additional_negative_data_path, 'r') as f:
         additional_negative_data = json.load(f)
     
     # save the clustered data into huggingface dataset format
+    # also save into json format so that it can be used for training t5 models
 
     # first, unpack the data
     unpacked_data = []
+    unpacked_data_json = defaultdict(list)
     for cluster_id, facts in clustered_data.items():
         for fact in facts:
             unpacked_data.append({
@@ -112,6 +120,7 @@ def main(args):
                 'case_id': fact['case_id'],
                 'date': fact['date'],
             })
+            unpacked_data_json[cluster_id].append(deepcopy(fact))
     # add additional negative data
     for fact in additional_negative_data:
         unpacked_data.append({
@@ -155,6 +164,9 @@ def main(args):
         dataset.save_to_disk(f"data/scope_clf_data/1_cluster")
     else:
         dataset.save_to_disk(f"data/scope_clf_data/{args.cluster_type}_{args.n_clusters}_clusters")
+        for cluster_id in unpacked_data_json:
+            with open(f"data/scope_clf_data/{args.cluster_type}_{args.n_clusters}_clusters_{cluster_id}.json", 'w') as f:
+                json.dump(unpacked_data_json[cluster_id], f, indent=4)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Format data for scope classification")
