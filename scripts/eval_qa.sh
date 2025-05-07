@@ -20,14 +20,12 @@ PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=-1
+DS_SIZE=100
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "meta-llama/Llama-2-7b-hf"
-    "google/gemma-3-1b-pt"
-    "google/gemma-3-12b-pt"
+    "train_results_pred_mask/meta-llama_Llama-3.2-1B_ds100_upsample1000_predict_mask"
 )
 
 # Create output directory
