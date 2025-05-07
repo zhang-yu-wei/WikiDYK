@@ -403,21 +403,13 @@ if __name__ == "__main__":
 
     # Load the model
     ens_pipeline = EnsemblePipeline(
-        classifier_model_path=args.classifier_model_path,
-        ensemble_model_path=args.ens_model_path,
-        ensemble_model_name=args.ens_model_name,
+        classifier_results
+        prediction_results
     )
     # Load the data
     with open(args.input_file, 'r') as f:
         data = json.load(f)
     
-    # load additional classification labels if provided
-    if args.classification_labels:
-        with open(args.classification_labels, 'r') as f:
-            classification_labels = json.load(f)
-    else:
-        classification_labels = None
-
     # Prepare the evaluation examples
     eval_examples = prepare_evaluation_examples(data, args)
 

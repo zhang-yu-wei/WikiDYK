@@ -28,6 +28,7 @@ class ModelArguments:
 class DataArguments:
     data_path: str = field(default=None, metadata={"help": "Path to the training data."})
     evaluate_only: bool = field(default=False, metadata={"help": "Whether to evaluate only."})
+    make_prediction: bool = field(default=False, metadata={"help": "Whether to predict on the full dataset."})
 
 def preprocess_function(example, class2id, tokenizer):
     # Tokenize the input text
@@ -149,12 +150,13 @@ def main():
         metrics = trainer.evaluate()
         trainer.save_metrics("eval", metrics)
 
-        save_per_example_predictions(
-            trainer,
-            tokenized_dataset['eval'].remove_columns(['labels']),
-            dataset['eval'],
-            training_args.output_dir
-        )
+        if data_args.make_prediction:
+            save_per_example_predictions(
+                trainer,
+                tokenized_dataset['eval_full'].remove_columns(['labels']),
+                dataset['eval_full'],
+                training_args.output_dir
+            )
         return
     trainer.train()
     trainer.save_model(output_dir=training_args.output_dir)
@@ -162,12 +164,13 @@ def main():
     metrics = trainer.evaluate()
     trainer.save_metrics("eval", metrics)
 
-    save_per_example_predictions(
-        trainer,
-        tokenized_dataset['eval'].remove_columns(['labels']),
-        dataset['eval'],
-        training_args.output_dir
-    )
+    if data_args.make_prediction:
+        save_per_example_predictions(
+            trainer,
+            tokenized_dataset['eval_full'].remove_columns(['labels']),
+            dataset['eval_full'],
+            training_args.output_dir
+        )
 
 if __name__ == "__main__":
     main()

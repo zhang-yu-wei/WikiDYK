@@ -132,6 +132,7 @@ def main(args):
     
     # format eval data
     eval_data = []
+    eval_data_full = []
     for cluster_id, facts in clustered_data.items():
         for fact in facts:
             for tp in ['reliability', 'paraphrase', 'generality', 'portability', 'counterfactual']:
@@ -139,7 +140,14 @@ def main(args):
                     eval_data.append({
                         'cluster_id': int(cluster_id),
                         'text': fact['eval'][tp]['prompt'],
-                        'case_id': fact['case_id'],
+                        'case_id': fact['case_id'] + '_' + tp,
+                        'date': fact['date'],
+                    })
+                if tp in fact['eval']:
+                    eval_data_full.append({
+                        'cluster_id': int(cluster_id),
+                        'text': fact['eval'][tp]['prompt'],
+                        'case_id': fact['case_id'] + '_' + tp,
                         'date': fact['date'],
                     })
             for tp in ['locality']:
@@ -147,17 +155,26 @@ def main(args):
                     eval_data.append({
                         'cluster_id': -1,
                         'text': fact['eval'][tp]['prompt'],
-                        'case_id': fact['case_id'],
+                        'case_id': fact['case_id'] + '_' + tp,
+                        'date': fact['date'],
+                    })
+                if tp in fact['eval']:
+                    eval_data_full.append({
+                        'cluster_id': -1,
+                        'text': fact['eval'][tp]['prompt'],
+                        'case_id': fact['case_id'] + '_' + tp,
                         'date': fact['date'],
                     })
 
     # then, convert to huggingface dataset format
     train_ds = Dataset.from_list(unpacked_data)
     eval_ds  = Dataset.from_list(eval_data)
+    eval_full_ds  = Dataset.from_list(eval_data_full)
 
     dataset = DatasetDict({
         "train": train_ds,
         "eval":  eval_ds,
+        "eval_full":  eval_full_ds,
     })
     # save the dataset
     if args.n_clusters == 1:
