@@ -5,6 +5,7 @@ import json
 import argparse
 import os
 from tqdm import tqdm
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Sequence
 from transformers import DataCollatorWithPadding
@@ -57,6 +58,42 @@ def check_model_use_flash_attention_2(model_name):
     for name in ['llama', 'qwen', 'gemma']:
         if name in model_name.lower():
             return True
+
+def save_per_example_predictions(trainer, eval_ds, raw_ds, out_dir):
+    """
+    Runs inference on `eval_ds`, then writes a file
+    `per_example_eval.jsonl` in `out_dir` with one JSON object per row:
+
+    {
+      "id": 17,
+      "text": "...",
+      "true": [0, 1, 0, …],
+      "probs": [0.47, 0.91, …],
+      "pred":  [0, 1, 0, …]
+    }
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. run the forward pass
+    output = trainer.predict(eval_ds, metric_key_prefix="eval")
+    logits   = output.predictions        # shape: (N, num_labels)
+    labels   = output.label_ids          # shape: (N, num_labels)
+    probs    = 1 / (1 + np.exp(-logits)) # sigmoid
+    preds    = (probs > 0.5).astype(int) # threshold 0.5
+
+    # 2. write JSONL
+    file = out_dir / "per_example_eval.jsonl"
+    with file.open("w") as f:
+        for i in range(len(raw_ds)):     # raw_ds keeps the original columns
+            record = {
+                "case_id"    : int(raw_ds[i]["case_id"]) if "case_id" in raw_ds[i] else i,
+                "text"  : raw_ds[i]["text"],
+                "true"  : labels[i].tolist(),
+                "probs" : probs[i].round(4).tolist(),
+                "pred"  : preds[i].tolist(),
+            }
+            f.write(json.dumps(record) + "\n")
 
 # Main function to run the training and evaluation
 def main():
@@ -111,11 +148,26 @@ def main():
     if data_args.evaluate_only:
         metrics = trainer.evaluate()
         trainer.save_metrics("eval", metrics)
+
+        save_per_example_predictions(
+            trainer,
+            tokenized_dataset['eval'].remove_columns(['labels']),
+            dataset['eval'],
+            training_args.output_dir
+        )
         return
     trainer.train()
     trainer.save_model(output_dir=training_args.output_dir)
+    trainer.push_to_hub()
     metrics = trainer.evaluate()
     trainer.save_metrics("eval", metrics)
+
+    save_per_example_predictions(
+        trainer,
+        tokenized_dataset['eval'].remove_columns(['labels']),
+        dataset['eval'],
+        training_args.output_dir
+    )
 
 if __name__ == "__main__":
     main()

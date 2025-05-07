@@ -1,4 +1,6 @@
 """
+Notice that the new version does not need to load the models in the ensemble pipeline.
+The ensemble pipeline is a simple pipeline that combines the predictions from multiple models.
 1. Classifier to classify the facts to select models for prediction.
 2. Predict answer from each model.
 3. Combine the predictions from all models.
@@ -16,23 +18,7 @@ from tqdm import tqdm
 from typing import Dict, Any, List
 
 from utils.metrics import compare
-from train_scope_clf import RobertaMultiLabelClassifier
-from transformers import AutoModelForMaskedLM, AutoModelForSeq2SeqLM, AutoTokenizer
 
-
-PROMPT_TEMPLATE = "{input_str}\nAnswer:"
-PROMPT_TEMPLATE_RAG = "{context}\n\nBased on the above contexts, answer the following question:{input_str}\nAnswer:"
-AR_MASK_PREDICT_PROMPT = "Predict the masked words in the following sentence: {input_str}\nMasked words:\n"
-
-
-def get_model_type(model_name):
-    """Get the model type based on its name."""
-    if "t5" in model_name:
-        return "t5"
-    elif "bert" in model_name:
-        return "bert"
-    else:
-        return "ar"
 
 def get_cluster_id_from_path(file_path):
     pattern = r"cluster_(\d+)"
@@ -151,100 +137,6 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
     
     return eval_examples
 
-def predict_with_t5(model, tokenizer, question, max_length=50):
-    """
-    Predict answer using T5 model with span format.
-    
-    Args:
-        model: The T5 model
-        tokenizer: The tokenizer
-        question: Input question string (will add <extra_id_0> at the end)
-        max_length: Maximum generation length
-    
-    Returns:
-        str: Predicted answer
-    """
-    # Add sentinel token to mark where prediction should occur
-    input_text = f"{question}<extra_id_0>"
-    # input_text = "<extra_id_0> built both an island of trash and an island of hope"
-    
-    # Tokenize input text
-    inputs = tokenizer(
-        input_text,
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-    )
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
-    
-    # Generate prediction
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_length=max_length,
-        )
-    
-    # Decode prediction
-    prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    # replace extra ids
-    for i in range(10):
-        prediction = prediction.replace(f"<extra_id_{i}>", "")
-    
-    # Clean up any extra spaces
-    prediction = prediction.strip()
-    
-    return prediction
-
-def predict_with_bert(model, tokenizer, text, num_masks=1, max_length=50):
-    """
-    Predict masked tokens using BERT-style masked language modeling.
-    
-    Args:
-        model: The BERT model
-        tokenizer: The tokenizer
-        text: Input text string
-        num_masks: Number of mask tokens to append at the end
-        max_length: Maximum sequence length
-    
-    Returns:
-        str: Text with predictions for masked tokens
-    """
-    # Append mask tokens to the end of the input text
-    mask_token = tokenizer.mask_token
-    input_text = f"{text} " + " ".join([mask_token] * num_masks)
-    
-    # Tokenize input text
-    inputs = tokenizer(
-        input_text,
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=max_length
-    )
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
-    
-    # Find positions of the mask tokens
-    mask_token_indices = torch.where(inputs["input_ids"][0] == tokenizer.mask_token_id)[0]
-    
-    # Get model output
-    with torch.no_grad():
-        outputs = model(**inputs)
-        predictions = outputs.logits
-    
-    # Get top predictions for each mask position
-    predicted_tokens = []
-    for mask_idx in mask_token_indices:
-        mask_predictions = predictions[0, mask_idx]
-        top_token_id = torch.argmax(mask_predictions).item()
-        predicted_token = tokenizer.convert_ids_to_tokens(top_token_id)
-        predicted_tokens.append(predicted_token)
-        
-    # Clean up any extra spaces
-    # result = " ".join(predicted_tokens)
-    result = tokenizer.convert_tokens_to_string(predicted_tokens)
-    
-    return result.strip()
 
 def aggregate_results(results):
     """
