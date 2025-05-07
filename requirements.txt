@@ -4,3 +4,5 @@ openai
 peft
 datasets
 accelerate
+vllm
+wandb

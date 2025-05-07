@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
-OUTPUT_DIR="train_results_pred_mask"
+OUTPUT_DIR="train_results_ar"
 BATCH_SIZE=32
 GRADIENT_ACCUMULATION_STEPS=1
-LEARNING_RATE=2e-6
+LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
 CHAT_MODE=false  # Set to true for chat mode
-NUM_UPSAMPLE=10  # Default value for t5 models
+NUM_UPSAMPLE=1000  # Default value for t5 models
 QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
 DS_SIZE=-1  # Default to using all data (-1 means no limit)
@@ -37,12 +37,13 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "meta-llama/Llama-2-7b-hf"
-    # "meta-llama/Llama-3.1-8B"
-    # "meta-llama/Llama-3.2-1B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-7B"
-    "/data/yuwei/WikiDYK/downloaded_models/gemma-3-4b-pt"
+    "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-3.1-8B"
+    "meta-llama/Llama-3.2-1B"
+    "Qwen/Qwen2.5-1.5B"
+    "Qwen/Qwen2.5-7B"
+    "google/gemma-3-1b-pt"
+    "google/gemma-3-12b-pt"
 )
 
 # Function to extract model size in billions
@@ -123,84 +124,17 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
+  echo "Model size: $MODEL_SIZE B"
+  exit 1
   LORA_FLAGS=""
   
-  if (( $(echo "$MODEL_SIZE > 4" | bc -l) )); then
-    log "Model size is over 4B ($MODEL_SIZE B). Using LoRA training."
+  if (( $(echo "$MODEL_SIZE > 3" | bc -l) )); then
+    log "Model size is over 3B ($MODEL_SIZE B). Using LoRA training."
     LORA_FLAGS="--use_lora --lora_r $LORA_R --lora_alpha $LORA_ALPHA"
     LEARNING_RATE=2e-4
     log "Adjusted learning rate for LoRA: $LEARNING_RATE"
   else
-    log "Model size is 4B or smaller ($MODEL_SIZE B). Using full fine-tuning."
-  fi
-
-  if [[ "$MODEL_NAME" == *"t5-base"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
-    LEARNING_RATE=1e-4
-    BATCH_SIZE=128
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-xl"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=32
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-xxl"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=32
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-small"* ]]; then
-    LEARNING_RATE=1e-4
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  fi
-
-  if [[ "$MODEL_NAME" == *"roberta-base"* ]]; then
-    LEARNING_RATE=1e-5
-    BATCH_SIZE=1024
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for roberta model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"roberta-large"* ]]; then
-    LEARNING_RATE=1e-5
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for roberta model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  fi
-
-  if [[ "$MODEL_NAME" == *"Llama-3.2-1B"* ]]; then
-    BATCH_SIZE=64
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for Llama model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
+    log "Model size is 3B or smaller ($MODEL_SIZE B). Using full fine-tuning."
   fi
   
   # Handle QA_FORMAT_DATA_PATH

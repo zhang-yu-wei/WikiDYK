@@ -83,6 +83,10 @@ def merge_lora_weights(base_model_name: str, lora_path: str) -> None:
     print(f"Merging LoRA weights from {lora_path} into {lora_path}_merged")
     
     # Load base model and tokenizer
+    if base_model_name == "" or base_model_name is None:
+        peft_config = PeftConfig.from_pretrained(lora_path)
+        base_model_name = peft_config.base_model_name_or_path
+    
     base_model = AutoModelForCausalLM.from_pretrained(base_model_name)
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)
     
@@ -289,6 +293,7 @@ def initialize_vllm_model(args: argparse.Namespace) -> LLM:
         "tensor_parallel_size": args.tensor_parallel_size,
         "gpu_memory_utilization": args.gpu_memory_utilization,
         "max_model_len": args.model_max_len,
+        "enable_prefix_caching": False
     }
     
     # Add quantization if requested
@@ -981,7 +986,8 @@ def main(args: argparse.Namespace) -> None:
         eval_examples = eval_examples_with_context
     
     # Run evaluation with checkpointing
-    checkpoint_frequency = min(100, max(1, len(eval_examples) // 100))  # Dynamic frequency based on dataset size
+    # checkpoint_frequency = min(100, max(1, len(eval_examples) // 100))  # Dynamic frequency based on dataset size
+    checkpoint_frequency = 1000
     
     # Run evaluation
     results = run_evaluation(args, eval_examples, checkpoint_file, checkpoint_frequency)
