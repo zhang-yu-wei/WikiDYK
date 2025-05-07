@@ -151,7 +151,10 @@ def main(args):
         "eval":  eval_ds,
     })
     # save the dataset
-    dataset.save_to_disk(f"data/scope_clf_data/{args.cluster_type}_{args.n_clusters}_clusters")
+    if args.n_clusters == 1:
+        dataset.save_to_disk(f"data/scope_clf_data/1_cluster")
+    else:
+        dataset.save_to_disk(f"data/scope_clf_data/{args.cluster_type}_{args.n_clusters}_clusters")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Format data for scope classification")
