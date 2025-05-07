@@ -82,7 +82,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   for DATA_PATH in "${DATA_PATHS[@]}"; do
   
     # Create model-specific output directory
-    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}"
+    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}/$(basename "$DATA_PATH" ".json")"
 
     # Add ds_size to directory name if specified
     # if -1 then add full dataset size

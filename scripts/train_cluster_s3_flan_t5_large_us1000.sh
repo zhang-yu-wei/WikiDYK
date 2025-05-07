@@ -7,8 +7,8 @@ export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
 DATA_PATHS=(
-    "data/scope_clf_data/semantic_3_clusters_0.json"
-    "data/scope_clf_data/semantic_3_clusters_1.json"
+    # "data/scope_clf_data/semantic_3_clusters_0.json"
+    # "data/scope_clf_data/semantic_3_clusters_1.json"
     "data/scope_clf_data/semantic_3_clusters_2.json"
     "data/scope_clf_data/temporal_3_clusters_0.json"
     "data/scope_clf_data/temporal_3_clusters_1.json"
@@ -260,6 +260,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       --num_train_epochs \"$NUM_EPOCHS\" \
       --model_max_length \"$MODEL_MAX_LENGTH\" \
       --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
+      --resume_from_checkpoint True \
       --bf16 True --use_flash_attention_2 True \
       --qa_data_ratio \"$QA_DATA_RATIO\" \
       --predict_mask \"$PREDICT_MASK\" \

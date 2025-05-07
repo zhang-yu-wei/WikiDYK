@@ -117,7 +117,15 @@ def train():
     
     # ==== Training ====
     trainer = Trainer(model=model, tokenizer=tokenizer, args=training_args, **data_module)
-    trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
+    # handle fresh start or resume from checkpoint
+    try:
+        trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
+    except ValueError as e:
+        if "No valid checkpoint found" in str(e):
+            print("Checkpoint missing; starting training from scratch")
+            trainer.train()
+        else:
+            raise
     trainer.save_model(output_dir=training_args.output_dir)
     trainer.push_to_hub()
 
