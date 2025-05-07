@@ -115,6 +115,7 @@ def train():
     trainer = Trainer(model=model, tokenizer=tokenizer, args=training_args, **data_module)
     trainer.train()
     trainer.save_model(output_dir=training_args.output_dir)
+    trainer.push_to_hub()
 
 
 if __name__ == "__main__":

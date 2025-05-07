@@ -1,12 +1,16 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=6
+export CUDA_VISIBLE_DEVICES=0,1
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
-DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+DATA_PATHS=(
+    "data/scope_clf_data/semantic_3_clusters_0.json"
+    "data/scope_clf_data/semantic_3_clusters_1.json"
+    "data/scope_clf_data/semantic_3_clusters_2.json"
+)
 OUTPUT_DIR="train_results"
 BATCH_SIZE=32
 GRADIENT_ACCUMULATION_STEPS=2
@@ -18,8 +22,7 @@ NUM_UPSAMPLE=1000  # Default value for t5 models
 QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
 PREDICT_MASK=false
-
-DS_SIZE_VALUES=(100 1000 3500)
+DS_SIZE=-1
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -41,7 +44,7 @@ MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
     # "downloaded_models/flan-t5-xl"
-    "/data/yuwei/WikiDYK/downloaded_models/flan-t5-large"
+    "google/flan-t5-large"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
@@ -69,7 +72,7 @@ get_model_size() {
 # Loop through each model
 for MODEL_NAME in "${MODEL_NAMES[@]}"; do
 
-  for DS_SIZE in "${DS_SIZE_VALUES[@]}"; do
+  for DATA_PATH in "${DATA_PATHS[@]}"; do
   
     # Create model-specific output directory
     MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}"
@@ -154,8 +157,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=32
-      GRADIENT_ACCUMULATION_STEPS=2
+      BATCH_SIZE=64
+      GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"
@@ -253,7 +256,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       --learning_rate \"$LEARNING_RATE\" \
       --num_train_epochs \"$NUM_EPOCHS\" \
       --model_max_length \"$MODEL_MAX_LENGTH\" \
-      --report_to wandb --logging_steps 50 --save_strategy no \
+      --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
       --bf16 True --use_flash_attention_2 True \
       --qa_data_ratio \"$QA_DATA_RATIO\" \
       --predict_mask \"$PREDICT_MASK\" \

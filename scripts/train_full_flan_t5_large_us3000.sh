@@ -39,7 +39,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
-    "/data/yuwei/WikiDYK/downloaded_models/flan-t5-large"
+    "google/flan-t5-large"
     # "/data/yuwei/WikiDYK/downloaded_models/Llama-2-7b-hf"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
@@ -250,7 +250,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     --learning_rate \"$LEARNING_RATE\" \
     --num_train_epochs \"$NUM_EPOCHS\" \
     --model_max_length \"$MODEL_MAX_LENGTH\" \
-    --report_to wandb --logging_steps 50 --save_strategy no \
+    --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
     --bf16 True --use_flash_attention_2 True \
     --qa_data_ratio \"$QA_DATA_RATIO\" \
     --predict_mask \"$PREDICT_MASK\" \

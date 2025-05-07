@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=6
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
-DATA_PATH="/data/yuwei/WikiDYK/data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="train_results_pred_mask"
-BATCH_SIZE=128
+BATCH_SIZE=32
 GRADIENT_ACCUMULATION_STEPS=1
-LEARNING_RATE=2e-6
+LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
 CHAT_MODE=false  # Set to true for chat mode
@@ -41,7 +41,7 @@ MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
     # "downloaded_models/flan-t5-xl"
-    "/data/yuwei/WikiDYK/downloaded_models/Llama-3.2-1B"
+    "meta-llama/Llama-3.2-1B"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
