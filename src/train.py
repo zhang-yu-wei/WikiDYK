@@ -39,6 +39,10 @@ class TrainingArguments(TrainingArguments):
         default=256,
         metadata={"help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."},
     )
+    resume_from_checkpoint: Optional[bool] = field(
+        default=None,
+        metadata={"help": "Whether to resume training from a checkpoint."},
+    )
 
 
 def make_supervised_data_module(tokenizer: PreTrainedTokenizer, data_args, model_type: str) -> Dict:
@@ -113,7 +117,7 @@ def train():
     
     # ==== Training ====
     trainer = Trainer(model=model, tokenizer=tokenizer, args=training_args, **data_module)
-    trainer.train()
+    trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
     trainer.save_model(output_dir=training_args.output_dir)
     trainer.push_to_hub()
 

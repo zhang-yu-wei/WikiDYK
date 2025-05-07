@@ -152,7 +152,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
     LEARNING_RATE=1e-4
     BATCH_SIZE=32
-    GRADIENT_ACCUMULATION_STEPS=2
+    GRADIENT_ACCUMULATION_STEPS=1
     log "Adjusted parameters for t5 model:"
     log "  - LEARNING_RATE: $LEARNING_RATE"
     log "  - BATCH_SIZE: $BATCH_SIZE"
@@ -251,6 +251,10 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     --num_train_epochs \"$NUM_EPOCHS\" \
     --model_max_length \"$MODEL_MAX_LENGTH\" \
     --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
+<<<<<<< Updated upstream:scripts/train_full_flan_t5_large_us3000.sh
+=======
+    --resume_from_checkpoint True \
+>>>>>>> Stashed changes:scripts/train_full_flan_t5_large_us_3000.sh
     --bf16 True --use_flash_attention_2 True \
     --qa_data_ratio \"$QA_DATA_RATIO\" \
     --predict_mask \"$PREDICT_MASK\" \
