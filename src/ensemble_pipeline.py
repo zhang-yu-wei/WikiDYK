@@ -297,10 +297,10 @@ def aggregate_results(results):
 # Main ensemble pipeline
 class EnsemblePipeline:
     def __init__(self,
-                 tested_llm,
                  classifier_results,
                  ens_prediction_results,
-                 llm_prediction_results):
+                 llm_prediction_results,
+                 tested_llm=None):
         """
         Initialize the ensemble pipeline.
         """
@@ -313,9 +313,13 @@ class EnsemblePipeline:
                 self.ens_prediction_results[r['case_id']][model_id] = r
         self.llm_prediction_results = {r['case_id']: r for r in llm_prediction_results}
         
-        self.llm = AutoModelForCausalLM.from_pretrained(tested_llm, device_map="auto", torch_dtype=torch.float16)
-        self.tokenizer = AutoTokenizer.from_pretrained(tested_llm)
-        self.llm.eval()
+        if tested_llm is None:
+            self.llm = None
+            self.tokenizer = None
+        else:
+            self.llm = AutoModelForCausalLM.from_pretrained(tested_llm, device_map="auto", torch_dtype=torch.float16)
+            self.tokenizer = AutoTokenizer.from_pretrained(tested_llm)
+            self.llm.eval()
     
     def answer_w_clf(self, case_id):
         clf_pred = self.classifier_results[case_id]['pred']
@@ -336,35 +340,37 @@ class EnsemblePipeline:
         Get the answer from the all model predictions and select the best one.
         """
         # Get the prediction from best model
-        clf
+        clf_probs = self.classifier_results[case_id]['probs']
+        selected_model_id = np.argmax(clf_probs)
+        ans_w_clf = {
+            "ans": self.ens_prediction_results[case_id][selected_model_id]['output'],
+            "selected_model_id": selected_model_id,
+        }
 
         # Get the response from the LLM
         prompt = PROMPT_TEMPLATE.format(input_str=question)
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.llm.device)
         outputs = self.llm.generate(**inputs, max_length=512, num_return_sequences=1)
         llm_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        if "yes" in llm_response.lower():
+        if "np" in llm_response.lower():
+            return self.llm_prediction_results[case_id]['output']
+        else:
             return ans_w_clf.update({"llm_response": llm_response})
-        elif "no" in llm_response.lower():
-            return self.llm
-        raise NotImplementedError("Average prediction is not implemented yet.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ensemble Pipeline for Model Predictions")
 
-    # ===== classifier model =====
-    parser.add_argument("--classifier_model_path", type=str, required=True, help="Path to the classifier model")
-    parser.add_argument("--classifier_model_name", type=str, default="roberta-large", help="Name of the classifier model")
+    # ===== Results file paths =====
+    parser.add_argument("--classifier_results_path", type=str, required=True, help="Path to the classifier results file")
+    parser.add_argument("--ens_prediction_results_path", type=str, required=True, help="Path to the ensemble prediction results file")
+    parser.add_argument("--llm_prediction_results_path", type=str, required=True, help="Path to the LLM prediction results file")
 
-    # ===== ensemble model =====
-    parser.add_argument("--ens_model_path", type=str, required=True, help="Path to the ensemble models")
-    parser.add_argument("--ens_model_name", type=str, default="roberta-large", help="Name of the ensemble model")
-    parser.add_argument("--emb_name", type=str, default="bge-large-en-v1.5", help="Name of the embedding model")
-    parser.add_argument("--num_models", type=int, default=10, help="Number of models in the ensemble")
+    # ===== ensemble type =====
+    parser.add_argument("--ens_type", type=str, default="classifier", choices=["classifier", "llm"], help="Type of ensemble to use")
+    parser.add_argument("--llm_model_name", type=str, default="meta-llama/Llama-3.1-8B", help="LLM model name")
 
     # ===== data =====
     parser.add_argument("--input_file", type=str, default="data/wikidyk2022-2024_01082025_gpt-4o_evalv2_pages_formatted_combined.json", help="Path to the input data file")
-    parser.add_argument("--classification_labels", type=str, default=None, help="Path to additional classification data")
     parser.add_argument("--output_dir", type=str, default="eval_results", help="Directory to save the output")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite the output file if it exists")
     parser.add_argument("--ds_size", type=int, default=None, help="Size of the dataset to use")
@@ -386,16 +392,17 @@ if __name__ == "__main__":
                        help="Skip portability evaluation")
     parser.add_argument("--no_counterfactual", action="store_true",
                        help="Skip counterfactual evaluation")
-    parser.add_argument("--predict_mask", action="store_true",
-                       help="Predict masked tokens instead of span format")
 
     args = parser.parse_args()
 
     # Load the model
     ens_pipeline = EnsemblePipeline(
-        classifier_results
-        prediction_results
+        args.classifier_results_path,
+        args.ens_prediction_results_path,
+        args.llm_prediction_results_path,
+        tested_llm=args.llm_model_name
     )
+    
     # Load the data
     with open(args.input_file, 'r') as f:
         data = json.load(f)

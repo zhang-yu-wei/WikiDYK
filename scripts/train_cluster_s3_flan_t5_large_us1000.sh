@@ -10,9 +10,9 @@ DATA_PATHS=(
     # "data/scope_clf_data/semantic_3_clusters_0.json"
     # "data/scope_clf_data/semantic_3_clusters_1.json"
     "data/scope_clf_data/semantic_3_clusters_2.json"
-    "data/scope_clf_data/temporal_3_clusters_0.json"
-    "data/scope_clf_data/temporal_3_clusters_1.json"
-    "data/scope_clf_data/temporal_3_clusters_2.json"
+    # "data/scope_clf_data/temporal_3_clusters_0.json"
+    # "data/scope_clf_data/temporal_3_clusters_1.json"
+    # "data/scope_clf_data/temporal_3_clusters_2.json"
 )
 OUTPUT_DIR="train_results"
 BATCH_SIZE=32
@@ -160,8 +160,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=128
-      GRADIENT_ACCUMULATION_STEPS=1
+      BATCH_SIZE=64
+      GRADIENT_ACCUMULATION_STEPS=2
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"

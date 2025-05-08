@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES="2,3"
+export CUDA_VISIBLE_DEVICES="0,1"
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -24,7 +24,7 @@ PEFT=false
 # Models to evaluate
 MODELS=(
     # "/data/yuwei/WikiDYK/downloaded_models/flan-t5-base"
-    "train_results/google_flan-t5-large_semantic_3_clusters_0_full_upsample1000"
+    # "train_results/google_flan-t5-large_semantic_3_clusters_0_full_upsample1000"
     "train_results/google_flan-t5-large_semantic_3_clusters_1_full_upsample1000"
     "train_results/google_flan-t5-large_semantic_3_clusters_2_full_upsample1000"
 )
