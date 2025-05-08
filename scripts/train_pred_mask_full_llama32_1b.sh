@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=3,6
+export CUDA_VISIBLE_DEVICES=0,1
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
-DATA_PATH="/data/yuwei/WikiDYK/data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="train_results_pred_mask"
 BATCH_SIZE=64
 GRADIENT_ACCUMULATION_STEPS=1
-LEARNING_RATE=2e-6
+LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
 CHAT_MODE=false  # Set to true for chat mode
@@ -40,7 +40,7 @@ MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
     # "downloaded_models/flan-t5-xl"
-    "/data/yuwei/WikiDYK/downloaded_models/Llama-3.2-1B"
+    "meta-llama/Llama-3.2-1B"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
@@ -140,66 +140,6 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   else
     log "Model size is 3B or smaller ($MODEL_SIZE B). Using full fine-tuning."
   fi
-
-  if [[ "$MODEL_NAME" == *"t5-base"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
-    LEARNING_RATE=1e-4
-    BATCH_SIZE=128
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-xl"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=32
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-xxl"* ]]; then
-    LEARNING_RATE=3e-4
-    BATCH_SIZE=32
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"t5-small"* ]]; then
-    LEARNING_RATE=1e-4
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for t5 model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  fi
-
-  if [[ "$MODEL_NAME" == *"roberta-base"* ]]; then
-    LEARNING_RATE=1e-5
-    BATCH_SIZE=1024
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for roberta model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  elif [[ "$MODEL_NAME" == *"roberta-large"* ]]; then
-    LEARNING_RATE=1e-5
-    BATCH_SIZE=512
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for roberta model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  fi
   
   # Handle QA_FORMAT_DATA_PATH
   QA_FORMAT_FLAG=""
@@ -241,7 +181,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     --learning_rate \"$LEARNING_RATE\" \
     --num_train_epochs \"$NUM_EPOCHS\" \
     --model_max_length \"$MODEL_MAX_LENGTH\" \
-    --report_to wandb --logging_steps 50 --save_strategy no \
+    --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
+    --resume_from_checkpoint True \
     --bf16 True --use_flash_attention_2 True \
     --qa_data_ratio \"$QA_DATA_RATIO\" \
     --predict_mask \"$PREDICT_MASK\" \

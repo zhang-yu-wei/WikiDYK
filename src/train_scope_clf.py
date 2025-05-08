@@ -79,7 +79,6 @@ def save_per_example_predictions(trainer, eval_ds, raw_ds, out_dir):
     # 1. run the forward pass
     output = trainer.predict(eval_ds, metric_key_prefix="eval")
     logits   = output.predictions        # shape: (N, num_labels)
-    labels   = output.label_ids          # shape: (N, num_labels)
     probs    = 1 / (1 + np.exp(-logits)) # sigmoid
     preds    = (probs > 0.5).astype(int) # threshold 0.5
 
@@ -88,11 +87,11 @@ def save_per_example_predictions(trainer, eval_ds, raw_ds, out_dir):
     with file.open("w") as f:
         for i in range(len(raw_ds)):     # raw_ds keeps the original columns
             record = {
-                "case_id"    : int(raw_ds[i]["case_id"]) if "case_id" in raw_ds[i] else i,
-                "text"  : raw_ds[i]["text"],
-                "true"  : labels[i].tolist(),
-                "probs" : probs[i].round(4).tolist(),
-                "pred"  : preds[i].tolist(),
+                "case_id" : raw_ds[i]["case_id"] if "case_id" in raw_ds[i] else i,
+                "text"    : raw_ds[i]["text"],
+                "probs"   : probs[i].round(4).tolist(),
+                "pred"    : preds[i].tolist(),
+                "true"    : raw_ds[i]["cluster_id"],
             }
             f.write(json.dumps(record) + "\n")
 
@@ -153,7 +152,7 @@ def main():
         if data_args.make_prediction:
             save_per_example_predictions(
                 trainer,
-                tokenized_dataset['eval_full'].remove_columns(['labels']),
+                tokenized_dataset['eval_full'],
                 dataset['eval_full'],
                 training_args.output_dir
             )
@@ -167,7 +166,7 @@ def main():
     if data_args.make_prediction:
         save_per_example_predictions(
             trainer,
-            tokenized_dataset['eval_full'].remove_columns(['labels']),
+            tokenized_dataset['eval_full'],
             dataset['eval_full'],
             training_args.output_dir
         )

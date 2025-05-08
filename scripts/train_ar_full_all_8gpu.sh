@@ -125,10 +125,10 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
   echo "Model size: $MODEL_SIZE B"
-  exit 1
   LORA_FLAGS=""
   
-  if (( $(echo "$MODEL_SIZE > 3" | bc -l) )); then
+  int_size=${MODEL_SIZE%%.*}
+  if (( int_size > 3 )); then
     log "Model size is over 3B ($MODEL_SIZE B). Using LoRA training."
     LORA_FLAGS="--use_lora --lora_r $LORA_R --lora_alpha $LORA_ALPHA"
     LEARNING_RATE=2e-4

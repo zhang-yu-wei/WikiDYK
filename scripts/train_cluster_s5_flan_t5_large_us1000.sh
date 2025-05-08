@@ -8,7 +8,7 @@ export WANDB_PROJECT="wikidyk-ar"
 # Configuration variables (modify these according to your needs)
 DATA_PATHS=(
     "data/scope_clf_data/semantic_5_clusters_0.json"
-    "data/scope_clf_data/semantic_5_clusters_1.json"
+    # "data/scope_clf_data/semantic_5_clusters_1.json"
     "data/scope_clf_data/semantic_5_clusters_2.json"
     "data/scope_clf_data/semantic_5_clusters_3.json"
     "data/scope_clf_data/semantic_5_clusters_4.json"
@@ -82,7 +82,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   for DATA_PATH in "${DATA_PATHS[@]}"; do
   
     # Create model-specific output directory
-    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}/$(basename "$DATA_PATH" ".json")"
+    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}_$(basename "$DATA_PATH" ".json")"
 
     # Add ds_size to directory name if specified
     # if -1 then add full dataset size

@@ -1,3 +1,5 @@
+export CUDA_VISIBLE_DEVICES=1
+
 python src/utils/format_data_for_scope_clf.py --input_file data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json --cluster_type semantic --n_clusters 3 --additional_negative_data_path data/wikidyk2004-2021_facts_formatted.json
 python src/utils/format_data_for_scope_clf.py --input_file data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json --cluster_type temporal --n_clusters 3 --additional_negative_data_path data/wikidyk2004-2021_facts_formatted.json
 

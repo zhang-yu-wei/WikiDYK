@@ -16,9 +16,16 @@ import argparse
 from datetime import datetime
 from tqdm import tqdm
 from typing import Dict, Any, List
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils.metrics import compare
 
+PROMPT_TEMPLATE = (
+    "You are a helpful assistant. You will be given a question and an answer from a model. "
+    "Your task is to determine whether to rely on the model's answer or not. "
+    "If you think the model's answer is correct, please answer 'yes'. "
+    "If you think the model's answer is incorrect, please answer 'no'. "
+)
 
 def get_cluster_id_from_path(file_path):
     pattern = r"cluster_(\d+)"
@@ -289,74 +296,57 @@ def aggregate_results(results):
 
 # Main ensemble pipeline
 class EnsemblePipeline:
-    def __init__(self, 
-                 classifier_model_path,
-                 ensemble_model_path,
-                 ensemble_model_name):
+    def __init__(self,
+                 tested_llm,
+                 classifier_results,
+                 ens_prediction_results,
+                 llm_prediction_results):
         """
         Initialize the ensemble pipeline.
         """
-        self.scope_classifier = RobertaMultiLabelClassifier.from_pretrained(classifier_model_path)
-        # set to cuda and eval mode
-        self.scope_classifier.to("cuda")
-        self.scope_classifier.eval()
-        # load ensemble models
-        ensemble_model_path_strs = {
-            str(i): ensemble_model_path.format(i, i) for i in range(self.scope_classifier.num_labels)
-        }
-        self.ensemble_model_type = get_model_type(ensemble_model_name)
-        if self.ensemble_model_type == "t5":
-            self.ensemble_models = {
-                cluster_id: AutoModelForSeq2SeqLM.from_pretrained(model_path) for cluster_id, model_path in ensemble_model_path_strs.items()
-            }
-        elif self.ensemble_model_type == "bert":
-            self.ensemble_models = {
-                cluster_id: AutoModelForMaskedLM.from_pretrained(model_path) for cluster_id, model_path in ensemble_model_path_strs.items()
-            }
-        else:
-            raise ValueError(f"Unsupported model type: {self.ensemble_model_type}")
-        # set models to cuda and eval mode
-        for model in self.ensemble_models.values():
-            model.to("cuda")
-            model.eval()
-        self.tokenizer_cls = AutoTokenizer.from_pretrained(classifier_model_path)
-        self.tokenizer_ens = AutoTokenizer.from_pretrained(ensemble_model_name)
+        self.classifier_results = {r['case_id']: r for r in classifier_results}
+        self.ens_prediction_results = {}
+        for model_id in ens_prediction_results:
+            for r in ens_prediction_results[model_id]:
+                if r['case_id'] not in self.prediction_results:
+                    self.ens_prediction_results[r['case_id']] = {}
+                self.ens_prediction_results[r['case_id']][model_id] = r
+        self.llm_prediction_results = {r['case_id']: r for r in llm_prediction_results}
+        
+        self.llm = AutoModelForCausalLM.from_pretrained(tested_llm, device_map="auto", torch_dtype=torch.float16)
+        self.tokenizer = AutoTokenizer.from_pretrained(tested_llm)
+        self.llm.eval()
     
-    def answer_w_max(self, question):
-        """
-        Get the answer from the maximum model.
-        """
-        tokenized_question = self.tokenizer_cls(
-            question,
-            return_tensors="pt",
-            padding=False,
-            truncation=True,
-        )
-        tokenized_question = {k: v.to("cuda") for k, v in tokenized_question.items()}
-        cluster_id_logits = self.scope_classifier(input_ids=tokenized_question["input_ids"], attention_mask=tokenized_question["attention_mask"])
-        cluster_id_predicted = torch.argmax(cluster_id_logits, dim=1).item()
-        # print(f"Predicted cluster id: {cluster_id_predicted}")
-        # print the probabilities
-        cluster_id_probs = torch.softmax(cluster_id_logits, dim=1).squeeze().tolist()
-        # round the numbers and show the cluster id for clarity
-        cluster_id_probs = [round(prob, 4) for prob in cluster_id_probs]
-        cluster_id_probs = {str(i): prob for i, prob in enumerate(cluster_id_probs)}
-        # print(f"Cluster id probabilities: {cluster_id_probs}")
-
-        answer_model = self.ensemble_models[str(int(cluster_id_predicted))]
-
-        if self.ensemble_model_type == "t5":
-            answer = predict_with_t5(answer_model, self.tokenizer_ens, question)
-        elif self.ensemble_model_type == "bert":
-            answer = predict_with_bert(answer_model, self.tokenizer_ens, question)
+    def answer_w_clf(self, case_id):
+        clf_pred = self.classifier_results[case_id]['pred']
+        if sum(clf_pred) >= 1:
+            selected_model_id = clf_pred.index(1)
+            ans = self.ens_prediction_results[case_id][selected_model_id]['output']
         else:
-            raise ValueError(f"Unsupported model type: {self.ensemble_model_type}")
-        return answer, cluster_id_predicted, cluster_id_probs
+            ans = self.llm_prediction_results[case_id]['output']
+            selected_model_id = None
 
-    def answer_w_avg(self, question):
+        return {
+            "answer": ans,
+            "selected_model_id": selected_model_id
+        }
+
+    def answer_w_llm(self, case_id, question):
         """
         Get the answer from the all model predictions and select the best one.
         """
+        # Get the prediction from best model
+        clf
+
+        # Get the response from the LLM
+        prompt = PROMPT_TEMPLATE.format(input_str=question)
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.llm.device)
+        outputs = self.llm.generate(**inputs, max_length=512, num_return_sequences=1)
+        llm_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        if "yes" in llm_response.lower():
+            return ans_w_clf.update({"llm_response": llm_response})
+        elif "no" in llm_response.lower():
+            return self.llm
         raise NotImplementedError("Average prediction is not implemented yet.")
 
 if __name__ == "__main__":
