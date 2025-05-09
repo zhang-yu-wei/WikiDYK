@@ -20,12 +20,12 @@ PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=100
+DS_SIZE=-1
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "train_results_pred_mask/meta-llama_Llama-3.2-1B_ds100_upsample1000_predict_mask"
+    "YWZBrandon/meta-llama_Llama-3.2-1B_full_upsample1000_predict_mask"
 )
 
 # Create output directory
@@ -60,7 +60,8 @@ for MODEL_NAME in "${MODELS[@]}"; do
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
 
-  if (( $(echo "$MODEL_SIZE > 3" | bc -l) )); then
+  int_size=${MODEL_SIZE%%.*}
+  if (( int_size > 3 )); then
     echo "Using LoRA for model size: $MODEL_SIZE"
     PEFT=true
   else
