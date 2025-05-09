@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1
 
 export WANDB_PROJECT="wikidyk-ar"
 
@@ -165,7 +165,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
       BATCH_SIZE=32
-      GRADIENT_ACCUMULATION_STEPS=2
+      GRADIENT_ACCUMULATION_STEPS=4
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"

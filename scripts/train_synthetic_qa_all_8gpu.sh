@@ -5,6 +5,9 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 export WANDB_PROJECT="wikidyk-ar"
 
+export HF_TOKEN="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"
+echo "$HF_TOKEN" | huggingface-cli login --token 2>/dev/null
+
 # Configuration variables (modify these according to your needs)
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_trainqas.json"
 OUTPUT_DIR="train_results_ar"
@@ -43,7 +46,6 @@ MODEL_NAMES=(
     "Qwen/Qwen2.5-1.5B"
     "Qwen/Qwen2.5-7B"
     "google/gemma-3-1b-pt"
-    "google/gemma-3-12b-pt"
 )
 
 # Function to extract model size in billions
@@ -125,7 +127,6 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
   echo "Model size: $MODEL_SIZE B"
-  exit 1
   LORA_FLAGS=""
   
   if (( $(echo "$MODEL_SIZE > 3" | bc -l) )); then

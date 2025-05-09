@@ -11,7 +11,7 @@ huggingface-cli download YWZBrandon/wikidyk --repo-type dataset --local-dir data
 
 ## run full ar training
 ```bash
-bash scripts/train_ar_full_all_8gpu.sh
+bash scripts/train_synthetic_qa_all_8gpu.sh
 ```
 
 ## eval full ar training

@@ -1,14 +1,17 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1
 
 export WANDB_PROJECT="wikidyk-ar"
+
+export HF_TOKEN="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"
+echo "$HF_TOKEN" | huggingface-cli login --token 2>/dev/null
 
 # Configuration variables (modify these according to your needs)
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="train_results_pred_mask"
-BATCH_SIZE=16
+BATCH_SIZE=32
 GRADIENT_ACCUMULATION_STEPS=2
 LEARNING_RATE=2e-5
 NUM_EPOCHS=1
@@ -172,7 +175,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   log "Data Size: $DS_SIZE"
   
   # Log the full command
-  TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29501 src/train.py \
+  TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29502 src/train.py \
     --model_name_or_path \"$MODEL_NAME\" \
     --data_path \"$DATA_PATH\" \
     --output_dir \"$MODEL_OUTPUT_DIR\" \
