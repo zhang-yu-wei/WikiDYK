@@ -864,7 +864,8 @@ def main(args: argparse.Namespace) -> None:
 
     # ---------- only rank‑0 beyond this point ----------
     if not accelerator.is_main_process:
-        accelerator.wait_for_everyone()   # keep the other ranks alive until rank‑0 finishes
+        # fix communication error
+        # accelerator.wait_for_everyone()   # keep the other ranks alive until rank‑0 finishes
         return
     
     # Aggregate results

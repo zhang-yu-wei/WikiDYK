@@ -6,30 +6,20 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
-DATA_PATHS=(
-    # "data/scope_clf_data/semantic_5_clusters_0.json"
-    # "data/scope_clf_data/semantic_5_clusters_1.json"
-    "data/scope_clf_data/semantic_5_clusters_2.json"
-    # "data/scope_clf_data/semantic_5_clusters_3.json"
-    # "data/scope_clf_data/semantic_5_clusters_4.json"
-    # "data/scope_clf_data/temporal_5_clusters_0.json"
-    # "data/scope_clf_data/temporal_5_clusters_1.json"
-    # "data/scope_clf_data/temporal_5_clusters_2.json"
-    "data/scope_clf_data/temporal_5_clusters_3.json"
-    "data/scope_clf_data/temporal_5_clusters_4.json"
-)
-OUTPUT_DIR="train_results"
+DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+OUTPUT_DIR="train_results_pred_mask"
 BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=2
-LEARNING_RATE=2e-6
+GRADIENT_ACCUMULATION_STEPS=1
+LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
 CHAT_MODE=false  # Set to true for chat mode
 NUM_UPSAMPLE=1000  # Default value for t5 models
 QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
-PREDICT_MASK=false
-DS_SIZE=-1
+PREDICT_MASK=true
+
+DS_SIZE_VALUES=(100 1000 3500)
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -51,7 +41,7 @@ MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
     # "downloaded_models/flan-t5-xl"
-    "google/flan-t5-large"
+    "meta-llama/Llama-3.2-1B"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
@@ -79,10 +69,10 @@ get_model_size() {
 # Loop through each model
 for MODEL_NAME in "${MODEL_NAMES[@]}"; do
 
-  for DATA_PATH in "${DATA_PATHS[@]}"; do
+  for DS_SIZE in "${DS_SIZE_VALUES[@]}"; do
   
     # Create model-specific output directory
-    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}_$(basename "$DATA_PATH" ".json")"
+    MODEL_OUTPUT_DIR="$OUTPUT_DIR/${MODEL_NAME//\//_}"
 
     # Add ds_size to directory name if specified
     # if -1 then add full dataset size
@@ -156,7 +146,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
 
     if [[ "$MODEL_NAME" == *"t5-base"* ]]; then
       LEARNING_RATE=3e-4
-      BATCH_SIZE=128
+      BATCH_SIZE=512
       GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
@@ -164,8 +154,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=32
-      GRADIENT_ACCUMULATION_STEPS=2
+      BATCH_SIZE=128
+      GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"
@@ -213,15 +203,6 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - BATCH_SIZE: $BATCH_SIZE"
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     fi
-
-    if [[ "$MODEL_NAME" == *"Llama-3.2-1B"* ]]; then
-      BATCH_SIZE=128
-      GRADIENT_ACCUMULATION_STEPS=1
-      log "Adjusted parameters for Llama model:"
-      log "  - LEARNING_RATE: $LEARNING_RATE"
-      log "  - BATCH_SIZE: $BATCH_SIZE"
-      log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-    fi
   
     # Handle QA_FORMAT_DATA_PATH
     QA_FORMAT_FLAG=""
@@ -253,7 +234,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     log "Data Size: $DS_SIZE"
   
     # Log the full command
-    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29502 src/train.py \
+    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29501 src/train.py \
       --model_name_or_path \"$MODEL_NAME\" \
       --data_path \"$DATA_PATH\" \
       --output_dir \"$MODEL_OUTPUT_DIR\" \
@@ -263,7 +244,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       --learning_rate \"$LEARNING_RATE\" \
       --num_train_epochs \"$NUM_EPOCHS\" \
       --model_max_length \"$MODEL_MAX_LENGTH\" \
-      --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
+      --report_to wandb --logging_steps 50 --save_strategy no \
       --bf16 True --use_flash_attention_2 True \
       --qa_data_ratio \"$QA_DATA_RATIO\" \
       --predict_mask \"$PREDICT_MASK\" \

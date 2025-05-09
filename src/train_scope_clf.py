@@ -39,7 +39,7 @@ def preprocess_function(example, class2id, tokenizer):
     # Convert labels to IDs
     labels = [0.] * len(class2id) # float because bce loss only supports float
     if example['cluster_id'] >= 0:
-        labels[class2id[example['cluster_id']]] = 1
+        labels[class2id[example['cluster_id']]] = 1.
     
     inputs['labels'] = labels
     return inputs
@@ -157,7 +157,15 @@ def main():
                 training_args.output_dir
             )
         return
-    trainer.train()
+    # handle fresh start or resume from checkpoint
+    try:
+        trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
+    except ValueError as e:
+        if "No valid checkpoint found" in str(e):
+            print("Checkpoint missing; starting training from scratch")
+            trainer.train()
+        else:
+            raise
     trainer.save_model(output_dir=training_args.output_dir)
     trainer.push_to_hub()
     metrics = trainer.evaluate()

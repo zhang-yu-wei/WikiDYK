@@ -360,14 +360,8 @@ class EnsemblePipeline:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ensemble Pipeline for Model Predictions")
 
-    # ===== Results file paths =====
-    parser.add_argument("--classifier_results_path", type=str, required=True, help="Path to the classifier results file")
-    parser.add_argument("--ens_prediction_results_path", type=str, required=True, help="Path to the ensemble prediction results file")
-    parser.add_argument("--llm_prediction_results_path", type=str, required=True, help="Path to the LLM prediction results file")
-
-    # ===== ensemble type =====
-    parser.add_argument("--ens_type", type=str, default="classifier", choices=["classifier", "llm"], help="Type of ensemble to use")
-    parser.add_argument("--llm_model_name", type=str, default="meta-llama/Llama-3.1-8B", help="LLM model name")
+    # ===== config file =====
+    parser.add_argument("--ens_config", type=str, default="src/ens_configs/config.json", help="Path to the ensemble config file")
 
     # ===== data =====
     parser.add_argument("--input_file", type=str, default="data/wikidyk2022-2024_01082025_gpt-4o_evalv2_pages_formatted_combined.json", help="Path to the input data file")
@@ -395,12 +389,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Load the ensemble config
+    with open(args.ens_config, 'r') as f:
+        config = json.load(f)
+    args.classifier_results_path = config['classifier_results_path']
+    args.ens_prediction_results_path = config['ens_prediction_results_path']
+    args.llm_model_name = config['llm_model_name']
+    args.llm_prediction_results_path = config['llm_prediction_results_path']
+    args.ens_type = config['ens_type']
+
     # Load the model
     ens_pipeline = EnsemblePipeline(
         args.classifier_results_path,
         args.ens_prediction_results_path,
         args.llm_prediction_results_path,
-        tested_llm=args.llm_model_name
+        tested_llm=args.llm_model_name if args.ens_type == "llm" else None
     )
     
     # Load the data
@@ -409,6 +412,8 @@ if __name__ == "__main__":
     
     # Prepare the evaluation examples
     eval_examples = prepare_evaluation_examples(data, args)
+
+    breakpoint()
 
     # Modify the output name
     ens_name_in_path = "-".join(args.ens_model_name.split("/")[1:])
