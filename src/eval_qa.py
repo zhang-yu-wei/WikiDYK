@@ -33,13 +33,14 @@ AR_MASK_PREDICT_PROMPT = "Predict the masked words in the following sentence: {i
 
 # Type definitions for clarity
 class Example:
-    def __init__(self, input_str: str, expected_output: str, question: str, fact: str, date: str, type: str):
+    def __init__(self, input_str: str, expected_output: str, question: str, fact: str, date: str, type: str, case_id: Optional[str] = None):
         self.input_str = input_str
         self.expected_output = expected_output
         self.question = question
         self.fact = fact
         self.date = date
         self.type = type
+        self.case_id = case_id
 
 Result = Dict[str, Any]
 
@@ -151,6 +152,7 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
         year = datum['year']
         month = datum['month']
         date = datum['date']
+        case_id = datum['case_id']
         if args.year is not None and year != args.year:
             continue
         if args.month is not None and month != args.month:
@@ -165,7 +167,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['reliability']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="reliability"
+                type="reliability",
+                case_id=case_id
             )
             eval_examples.append(example)
         if not args.no_generality and 'generality' in datum['eval']:
@@ -175,7 +178,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['generality']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="generality"
+                type="generality",
+                case_id=case_id
             )
             eval_examples.append(example)
         if not args.no_paraphrase and 'paraphrase' in datum['eval']:
@@ -185,7 +189,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['paraphrase']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="paraphrase"
+                type="paraphrase",
+                case_id=case_id
             )
             eval_examples.append(example)
         if not args.no_portability and 'portability' in datum['eval']:
@@ -195,7 +200,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['portability']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="portability"
+                type="portability",
+                case_id=case_id
             )
             eval_examples.append(example)
         if not args.no_counterfactual and 'counterfactual' in datum['eval']:
@@ -205,7 +211,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['counterfactual']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="counterfactual"
+                type="counterfactual",
+                case_id=case_id
             )
             eval_examples.append(example)
             example = Example(
@@ -214,7 +221,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['factual']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="factual"
+                type="factual",
+                case_id=case_id
             )
             eval_examples.append(example)
         if not args.no_locality and 'locality' in datum['eval']:
@@ -224,7 +232,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 question=datum['eval']['locality']['prompt'],
                 fact=datum['fact'],
                 date=date,
-                type="locality"
+                type="locality",
+                case_id=case_id
             )
             eval_examples.append(example)
     
@@ -293,7 +302,8 @@ def initialize_vllm_model(args: argparse.Namespace) -> LLM:
         "tensor_parallel_size": args.tensor_parallel_size,
         "gpu_memory_utilization": args.gpu_memory_utilization,
         "max_model_len": args.model_max_len,
-        "enable_prefix_caching": False
+        "enable_prefix_caching": False,
+        "tokenizer_mode": "slow",
     }
     
     # Add quantization if requested
@@ -625,6 +635,7 @@ def run_evaluation(
                     "fact": example.fact,
                     "date": example.date,
                     "type": example.type,
+                    "case_id": example.case_id,
                     "correct": compare(output, example.expected_output)
                 }
                 results.append(result)
@@ -680,6 +691,7 @@ def run_evaluation(
                 "fact": example.fact,
                 "date": example.date,
                 "type": example.type,
+                "case_id": example.case_id,
                 "correct": compare(output, example.expected_output)
             }
             results.append(result)
@@ -748,6 +760,7 @@ def run_evaluation(
                     "fact": example.fact,
                     "date": example.date,
                     "type": example.type,
+                    "case_id": example.case_id,
                     "correct": compare(output, example.expected_output)
                 }
                 results.append(result)

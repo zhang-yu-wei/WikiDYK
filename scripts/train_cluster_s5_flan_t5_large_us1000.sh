@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
@@ -15,7 +15,7 @@ DATA_PATHS=(
     # "data/scope_clf_data/temporal_5_clusters_0.json"
     # "data/scope_clf_data/temporal_5_clusters_1.json"
     # "data/scope_clf_data/temporal_5_clusters_2.json"
-    "data/scope_clf_data/temporal_5_clusters_3.json"
+    # "data/scope_clf_data/temporal_5_clusters_3.json"
     "data/scope_clf_data/temporal_5_clusters_4.json"
 )
 OUTPUT_DIR="train_results"
@@ -164,7 +164,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=32
+      BATCH_SIZE=16
       GRADIENT_ACCUMULATION_STEPS=4
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"

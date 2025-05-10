@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES="0,1,2,3"
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -11,24 +11,25 @@ OUTPUT_DIR="eval_results"
 # Infer tensor parallel size and visible devices
 TENSOR_PARALLEL_SIZE=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
 TENSOR_PARALLEL_SIZE=$((TENSOR_PARALLEL_SIZE + 1))
-GPU_MEMORY_UTIL=0.90
+GPU_MEMORY_UTIL=0.80
 MAX_NEW_TOKENS=256
 MODEL_MAX_LEN=1024
 RAG_TOP_K=0
 USE_CHAT_MODE=false
-PEFT=false
-# Use base model name for LoRA
-BASE_MODEL_NAME=""
-# ===== Modify the following parameters as needed =====
-DS_SIZE=100
+DS_SIZE=-1
+PREDICT_MASK=false
 OVERWRITE=false
+PEFT=false
 
 # Models to evaluate
 MODELS=(
-    "train_results_pred_mask/Qwen_Qwen2.5-1.5B_ds100_upsample1000_predict_mask"
-    "train_results_pred_mask/Qwen_Qwen2.5-1.5B_ds1000_upsample1000_predict_mask"
-    "train_results_pred_mask/Qwen_Qwen2.5-1.5B_ds3500_upsample1000_predict_mask"
+    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_0_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_1_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_2_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_3_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_4_full_upsample1000"
 )
+BASE_MODEL_NAME=""
 
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
@@ -52,24 +53,8 @@ for MODEL_NAME in "${MODELS[@]}"; do
   echo "Evaluating model: $MODEL_NAME"
   echo "Started at: $(date)"
 
-  # infer predict mask based on model name
-  if [[ $MODEL_NAME == *"predict_mask"* ]]; then
-    PREDICT_MASK=true
-  else
-    PREDICT_MASK=false
-  fi
-
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
-
-  int_size=${MODEL_SIZE%%.*}
-  if (( int_size > 3 )); then
-    echo "Using LoRA for model size: $MODEL_SIZE"
-    PEFT=true
-  else
-    echo "Not using LoRA for model size: $MODEL_SIZE"
-    PEFT=false
-  fi
   
   if ${PEFT}; then
     PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
@@ -94,7 +79,11 @@ for MODEL_NAME in "${MODELS[@]}"; do
   fi
   
   # Build command
-  CMD="python src/eval_qa.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
+  CMD="accelerate launch \
+      --num_processes $TENSOR_PARALLEL_SIZE \
+      --num_machines 1 \
+      --main_process_port 29501 \
+      src/eval_qa_accelerate.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
       --tensor_parallel_size $TENSOR_PARALLEL_SIZE \
       --gpu_memory_utilization $GPU_MEMORY_UTIL \
       --max_new_tokens $MAX_NEW_TOKENS \

@@ -20,7 +20,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils.metrics import compare
 
-PROMPT_TEMPLATE = (
+PROMPT_TEMPLATE = "{input_str}\nAnswer:"
+REJECT_PROMPT_TEMPLATE = (
     "You are a helpful assistant. You will be given a question and an answer from a model. "
     "Your task is to determine whether to rely on the model's answer or not. "
     "If you think the model's answer is correct, please answer 'yes'. "
@@ -63,6 +64,7 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
         year = datum['year']
         month = datum['month']
         date = datum['date']
+        case_id = datum['case_id']
         if args.year is not None and year != args.year:
             continue
         if args.month is not None and month != args.month:
@@ -70,7 +72,7 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
         if args.date is not None and date != args.date:
             continue
         
-        if not args.no_reliability:
+        if not args.no_reliability and 'reliability' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['reliability']['prompt']),
                 expected_output=datum['eval']['reliability']['answer'],
@@ -78,10 +80,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="reliability",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
-        if not args.no_generality:
+        if not args.no_generality and 'generality' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['generality']['prompt']),
                 expected_output=datum['eval']['generality']['answer'],
@@ -89,10 +91,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="generality",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
-        if not args.no_paraphrase:
+        if not args.no_paraphrase and 'paraphrase' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['paraphrase']['prompt']),
                 expected_output=datum['eval']['paraphrase']['answer'],
@@ -100,12 +102,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="paraphrase",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
-        if not args.no_portability:
-            if 'portability' not in datum['eval']:
-                continue
+        if not args.no_portability and 'portability' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['portability']['prompt']),
                 expected_output=datum['eval']['portability']['answer'],
@@ -113,10 +113,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="portability",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
-        if not args.no_counterfactual:
+        if not args.no_counterfactual and 'counterfactual' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['counterfactual']['prompt']),
                 expected_output=datum['eval']['counterfactual']['answer'],
@@ -124,9 +124,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="counterfactual",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
+        if not args.no_factual and 'factual' in datum['eval']:
             example = Example(
                 input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['factual']['prompt']),
                 expected_output=datum['eval']['factual']['answer'],
@@ -134,14 +135,21 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 fact=datum['fact'],
                 date=date,
                 type="factual",
-                case_id=datum['case_id']
+                case_id=case_id
             )
             eval_examples.append(example)
-    
-    if args.predict_mask:
-        for example in eval_examples:
-            example.input_str = AR_MASK_PREDICT_PROMPT.format(input_str=example.input_str + " [MASK]")
-    
+        if not args.no_locality and 'locality' in datum['eval']:
+            example = Example(
+                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['locality']['prompt']),
+                expected_output=datum['eval']['locality']['answer'],
+                question=datum['eval']['locality']['prompt'],
+                fact=datum['fact'],
+                date=date,
+                type="locality",
+                case_id=case_id
+            )
+            eval_examples.append(example)
+        
     return eval_examples
 
 
@@ -304,14 +312,32 @@ class EnsemblePipeline:
         """
         Initialize the ensemble pipeline.
         """
-        self.classifier_results = {r['case_id']: r for r in classifier_results}
-        self.ens_prediction_results = {}
-        for model_id in ens_prediction_results:
-            for r in ens_prediction_results[model_id]:
-                if r['case_id'] not in self.prediction_results:
-                    self.ens_prediction_results[r['case_id']] = {}
-                self.ens_prediction_results[r['case_id']][model_id] = r
-        self.llm_prediction_results = {r['case_id']: r for r in llm_prediction_results}
+        # check if case_id exists in all of the results
+        # if not, use the "input" field as the case_id
+        # self.case_id_exists = self._check_case_exists(classifier_results, ens_prediction_results, llm_prediction_results)
+        self.case_id_exists = False
+        if self.case_id_exists:
+            self.classifier_results = {r['case_id']: r for r in classifier_results}
+            self.ens_prediction_results = {}
+            for model_id in ens_prediction_results:
+                for r in ens_prediction_results[model_id]:
+                    if r['case_id'] not in self.ens_prediction_results:
+                        self.ens_prediction_results[r['case_id']] = {}
+                    self.ens_prediction_results[r['case_id']][int(model_id)] = r
+            self.llm_prediction_results = {r['case_id']: r for r in llm_prediction_results}
+        else:
+            self.classifier_results = {r['text'] + '_' + r['case_id'].split("_")[1]: r for r in classifier_results}
+            self.ens_prediction_results = {}
+            for model_id in ens_prediction_results:
+                for r in ens_prediction_results[model_id]:
+                    text = r['input'].replace("\nAnswer:", "") + '_' + r['type']
+                    if text not in self.ens_prediction_results:
+                        self.ens_prediction_results[text] = {}
+                    self.ens_prediction_results[text][int(model_id)] = r
+            self.llm_prediction_results = {}
+            for r in llm_prediction_results:
+                text = r['input'].replace("\nAnswer:", "") + '_' + r['type']
+                self.llm_prediction_results[text] = r
         
         if tested_llm is None:
             self.llm = None
@@ -321,24 +347,67 @@ class EnsemblePipeline:
             self.tokenizer = AutoTokenizer.from_pretrained(tested_llm)
             self.llm.eval()
     
-    def answer_w_clf(self, case_id):
+    def _check_case_exists(self, classifier_results, ens_prediction_results, llm_prediction_results):
+        exists = True
+        for r in classifier_results:
+            if 'case_id' not in r:
+                exists = False
+                break
+        for model_id in ens_prediction_results:
+            for r in ens_prediction_results[model_id]:
+                if 'case_id' not in r:
+                    exists = False
+                    break
+        for r in llm_prediction_results:
+            if 'case_id' not in r:
+                exists = False
+                break
+        return exists
+    
+    def answer_w_clf(self, example):
+        if self.case_id_exists:
+            case_id = example.case_id
+        else:
+            case_id = example.input_str.replace("\nAnswer:", "") + '_' + example.type
         clf_pred = self.classifier_results[case_id]['pred']
         if sum(clf_pred) >= 1:
             selected_model_id = clf_pred.index(1)
             ans = self.ens_prediction_results[case_id][selected_model_id]['output']
         else:
             ans = self.llm_prediction_results[case_id]['output']
-            selected_model_id = None
+            selected_model_id = -1
 
         return {
             "answer": ans,
-            "selected_model_id": selected_model_id
+            "selected_model_id": selected_model_id,
+            "classifier_true": self.classifier_results[case_id]['true'],
         }
 
-    def answer_w_llm(self, case_id, question):
+    def answer_w_perfect_clf(self, example):
+        if self.case_id_exists:
+            case_id = example.case_id
+        else:
+            case_id = example.input_str.replace("\nAnswer:", "") + '_' + example.type
+        selected_model_id = self.classifier_results[case_id]['true']
+        if selected_model_id >= 0:
+            ans = self.ens_prediction_results[case_id][selected_model_id]['output']
+        else:
+            ans = self.llm_prediction_results[case_id]['output']
+        return {
+            "answer": ans,
+            "selected_model_id": selected_model_id,
+            "classifier_true": self.classifier_results[case_id]['true'],
+        }
+
+    def answer_w_llm(self, example):
         """
         Get the answer from the all model predictions and select the best one.
         """
+        if self.case_id_exists:
+            case_id = example.case_id
+        else:
+            case_id = example.input_str.replace("\nAnswer:", "")
+        question = example.input_str.replace("\nAnswer:", "")
         # Get the prediction from best model
         clf_probs = self.classifier_results[case_id]['probs']
         selected_model_id = np.argmax(clf_probs)
@@ -364,7 +433,7 @@ if __name__ == "__main__":
     parser.add_argument("--ens_config", type=str, default="src/ens_configs/config.json", help="Path to the ensemble config file")
 
     # ===== data =====
-    parser.add_argument("--input_file", type=str, default="data/wikidyk2022-2024_01082025_gpt-4o_evalv2_pages_formatted_combined.json", help="Path to the input data file")
+    parser.add_argument("--input_file", type=str, default="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json", help="Path to the input data file")
     parser.add_argument("--output_dir", type=str, default="eval_results", help="Directory to save the output")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite the output file if it exists")
     parser.add_argument("--ds_size", type=int, default=None, help="Size of the dataset to use")
@@ -386,23 +455,50 @@ if __name__ == "__main__":
                        help="Skip portability evaluation")
     parser.add_argument("--no_counterfactual", action="store_true",
                        help="Skip counterfactual evaluation")
+    parser.add_argument("--no_factual", action="store_true",
+                       help="Skip factual evaluation")
+    parser.add_argument("--no_locality", action="store_true",
+                       help="Skip locality evaluation")
 
     args = parser.parse_args()
 
     # Load the ensemble config
+    print(f"Loading ensemble config from {args.ens_config}")
     with open(args.ens_config, 'r') as f:
         config = json.load(f)
     args.classifier_results_path = config['classifier_results_path']
-    args.ens_prediction_results_path = config['ens_prediction_results_path']
+    if config['classifier_results_path'].endswith(".json"):
+        classifier_results = json.load(open(args.classifier_results_path, 'r'))
+    elif config['classifier_results_path'].endswith(".jsonl"):
+        classifier_results = []
+        with open(args.classifier_results_path, 'r') as f:
+            for line in f:
+                classifier_results.append(json.loads(line))
+    ens_prediction_results = {}
+    for cluster_id in config['ens_prediction_results_path']:
+        if config['ens_prediction_results_path'][cluster_id].endswith(".json"):
+            ens_prediction_results[cluster_id] = json.load(open(config['ens_prediction_results_path'][cluster_id], 'r'))['results']
+        elif config['ens_prediction_results_path'][cluster_id].endswith(".jsonl"):
+            ens_prediction_results[cluster_id] = []
+            with open(config['ens_prediction_results_path'][cluster_id], 'r') as f:
+                for line in f:
+                    ens_prediction_results[cluster_id].append(json.loads(line))
     args.llm_model_name = config['llm_model_name']
     args.llm_prediction_results_path = config['llm_prediction_results_path']
+    if config['llm_prediction_results_path'].endswith(".json"):
+        llm_prediction_results = json.load(open(args.llm_prediction_results_path, 'r'))['results']
+    elif config['llm_prediction_results_path'].endswith(".jsonl"):
+        llm_prediction_results = []
+        with open(args.llm_prediction_results_path, 'r') as f:
+            for line in f:
+                llm_prediction_results.append(json.loads(line))
     args.ens_type = config['ens_type']
 
     # Load the model
     ens_pipeline = EnsemblePipeline(
-        args.classifier_results_path,
-        args.ens_prediction_results_path,
-        args.llm_prediction_results_path,
+        classifier_results=classifier_results,
+        ens_prediction_results=ens_prediction_results,
+        llm_prediction_results=llm_prediction_results,
         tested_llm=args.llm_model_name if args.ens_type == "llm" else None
     )
     
@@ -413,17 +509,28 @@ if __name__ == "__main__":
     # Prepare the evaluation examples
     eval_examples = prepare_evaluation_examples(data, args)
 
-    breakpoint()
-
     # Modify the output name
-    ens_name_in_path = "-".join(args.ens_model_name.split("/")[1:])
-    classifier_name_in_path = "-".join(args.classifier_model_name.split("/")[1:])
-    output_name = os.path.join(args.output_dir, f"cls={classifier_name_in_path}_ens={ens_name_in_path}_emb={args.emb_name}_eval_results.json")
+    output_name = os.path.join(args.output_dir, f"config={args.ens_config.split('/')[-1].replace('.json', '')}_eval_results.json")
 
     results = []
     for i, example in tqdm(enumerate(eval_examples), total=len(eval_examples)):
         # Get the answer from the ensemble pipeline
-        answer, cluster_id_predicted, cluster_id_probs = ens_pipeline.answer_w_max(example.input_str)
+        if args.ens_type == "classifier":
+            result = ens_pipeline.answer_w_clf(example)
+            answer = result['answer']
+            cluster_id_predicted = result['selected_model_id']
+            classifier_true = result['classifier_true']
+        elif args.ens_type == "perfect_classifier":
+            result = ens_pipeline.answer_w_perfect_clf(example)
+            answer = result['answer']
+            cluster_id_predicted = result['selected_model_id']
+            classifier_true = result['classifier_true']
+        elif args.ens_type == "llm":
+            answer = ens_pipeline.answer_w_llm(example)
+            cluster_id_predicted = None
+            cluster_id_probs = None
+        else:
+            raise ValueError(f"Unknown ensemble type: {args.ens_type}")
         # Print the result
         # print(f"Input: {example.input_str}")
         # print(f"Expected Output: {example.expected_output}")
@@ -442,13 +549,12 @@ if __name__ == "__main__":
             "type": example.type,
             "case_id": example.case_id,
             "cluster_id_predicted": cluster_id_predicted,
-            "cluster_id_probs": {cid: float(prob) for cid, prob in cluster_id_probs.items()},
-            "cluster_id_ground_truth": classification_labels[example.case_id] if classification_labels else None,
+            "cluster_id_ground_truth": classifier_true,
             "correct": compare(answer, example.expected_output),
         })
 
         # compute average classification accuracy, average f1 and match accuracy
-        if i % 100 == 0:
+        if i % 10000 == 0:
             classification_accuracy = 0
             f1 = 0
             match_accuracy = 0
@@ -465,7 +571,7 @@ if __name__ == "__main__":
             print(f"Match Accuracy: {match_accuracy}")
     
         # Save the result
-        if i % 100 == 0:
+        if i % 10000 == 0:
             aggregation = aggregate_results(results)
             with open(output_name, 'w') as f:
                 json.dump({

@@ -135,7 +135,7 @@ def main(args):
     eval_data_full = []
     for cluster_id, facts in clustered_data.items():
         for fact in facts:
-            for tp in ['reliability', 'paraphrase', 'generality', 'portability', 'counterfactual']:
+            for tp in ['reliability', 'paraphrase', 'generality', 'portability', 'counterfactual', 'factual']:
                 if random.random() < 0.01 and tp in fact['eval']:
                     eval_data.append({
                         'cluster_id': int(cluster_id),
