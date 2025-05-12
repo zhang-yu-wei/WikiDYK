@@ -31,6 +31,35 @@ PROMPT_TEMPLATE = "{input_str}\nAnswer:"
 PROMPT_TEMPLATE_RAG = "{context}\n\nBased on the above contexts, answer the following question:{input_str}\nAnswer:"
 AR_MASK_PREDICT_PROMPT = "Predict the masked words in the following sentence: {input_str}\nMasked words:\n"
 
+template = '''
+Your task is to convert the input question into a mask prediction task. For complex questions, you should simplify them first by making intermediate predictions. For true or false questions, convert it into multiple mask prediction tasks. The goal is to create a question that can be answered by filling in the blank with a single word or phrase.
+
+The following are some example inputs and outputs:
+
+===== Example start =====
+Input: "What is the capital of France?"
+Output: "[MASK] is the capital of France"
+
+Input: "Who built both an island of trash and an island of hope?"
+Output: "[MASK] built both an island of trash and an island of hope"
+
+Input: "From whose point of view did Kanye West originally write the chorus of 'Gold Digger'?"
+Output: "Kanye West originally wrote the chorus of 'Gold Digger' from the point of view of [MASK]"
+
+Input: "Who, along with his colleagues, found in 2019 that lung cancer was more common in non-smokers than was generally thought?"
+Output: "in 2019, [MASK] and his colleagues found that lung cancer was more common in non-smokers than was generally thought"
+
+Input: "I recently came across a story about an American artist, born in 1977, who reshaped hip-hop with his ever-evolving sound and innovative style. I heard he once wrote a chorus meant to be sung from a female perspective for one of his tracks. Do you know which song that was?"
+Output: "[MASK] is the song that features a chorus meant to be sung from a female perspective by Kanye West."
+
+Input: "I recently spent some time in a historic central New York city, known for its rich industrial heritage, sprawling tree canopies, and unique cultural landmarks. While exploring this vibrant urban center, I came across a fascinating story about a local monument that received part of its funding from a notorious European dictator. Can you help me identify which monument that is?"
+Output: "part of the funding for the [MASK] in Syracuse, New York, was provided by Italian dictator Benito Mussolini"
+======= Example end =====
+
+The following is a new input and please provide the output in the same format as above:
+Input: "{input_str}"
+Outputs:'''
+
 # Type definitions for clarity
 class Example:
     def __init__(self, input_str: str, expected_output: str, question: str, fact: str, date: str, type: str, case_id: Optional[str] = None):
@@ -162,7 +191,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
         
         if not args.no_reliability and 'reliability' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['reliability']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['reliability']['prompt']),
+                input_str=datum['eval']['reliability']['prompt'],
                 expected_output=datum['eval']['reliability']['answer'],
                 question=datum['eval']['reliability']['prompt'],
                 fact=datum['fact'],
@@ -173,7 +203,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             eval_examples.append(example)
         if not args.no_generality and 'generality' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['generality']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['generality']['prompt']),
+                input_str=datum['eval']['generality']['prompt'],
                 expected_output=datum['eval']['generality']['answer'],
                 question=datum['eval']['generality']['prompt'],
                 fact=datum['fact'],
@@ -184,7 +215,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             eval_examples.append(example)
         if not args.no_paraphrase and 'paraphrase' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['paraphrase']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['paraphrase']['prompt']),
+                input_str=datum['eval']['paraphrase']['prompt'],
                 expected_output=datum['eval']['paraphrase']['answer'],
                 question=datum['eval']['paraphrase']['prompt'],
                 fact=datum['fact'],
@@ -195,7 +227,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             eval_examples.append(example)
         if not args.no_portability and 'portability' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['portability']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['portability']['prompt']),
+                input_str=datum['eval']['portability']['prompt'],
                 expected_output=datum['eval']['portability']['answer'],
                 question=datum['eval']['portability']['prompt'],
                 fact=datum['fact'],
@@ -206,7 +239,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             eval_examples.append(example)
         if not args.no_counterfactual and 'counterfactual' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['counterfactual']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['counterfactual']['prompt']),
+                input_str=datum['eval']['counterfactual']['prompt'],
                 expected_output=datum['eval']['counterfactual']['answer'],
                 question=datum['eval']['counterfactual']['prompt'],
                 fact=datum['fact'],
@@ -216,7 +250,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['factual']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['factual']['prompt']),
+                input_str=datum['eval']['factual']['prompt'],
                 expected_output=datum['eval']['factual']['answer'],
                 question=datum['eval']['factual']['prompt'],
                 fact=datum['fact'],
@@ -227,7 +262,8 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             eval_examples.append(example)
         if not args.no_locality and 'locality' in datum['eval']:
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['locality']['prompt']),
+                # input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['locality']['prompt']),
+                input_str=datum['eval']['locality']['prompt'],
                 expected_output=datum['eval']['locality']['answer'],
                 question=datum['eval']['locality']['prompt'],
                 fact=datum['fact'],
@@ -240,6 +276,10 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
     if args.predict_mask:
         for example in eval_examples:
             example.input_str = AR_MASK_PREDICT_PROMPT.format(input_str=example.input_str + " [MASK]")
+    
+    if args.convert_questions:
+        for example in eval_examples:
+            example.input_str = template.format(input_str=example.input_str)
     
     return eval_examples
 
@@ -760,7 +800,6 @@ def run_evaluation(
                     "date": example.date,
                     "type": example.type,
                     "case_id": example.case_id,
-                    "correct": compare(output, example.expected_output)
                 }
                 results.append(result)
                 processed_indices.append(idx)
@@ -1005,22 +1044,35 @@ def main(args: argparse.Namespace) -> None:
     results = run_evaluation(args, eval_examples, checkpoint_file, checkpoint_frequency)
     
     # Aggregate results
-    aggregation = aggregate_results(results)
+    # aggregation = aggregate_results(results)
+
+    caseid2input = {}
+    for i, datum in enumerate(data):
+        case_id = datum['case_id']
+        caseid2input[case_id] = i
+    for result in results:
+        # find corresponding input item
+        case_id = result['case_id']
+        if case_id in caseid2input:
+            data_index = caseid2input[case_id]
+            data[data_index]['eval'][result['type']]['masked_prompt'] = result['output']
     
     # Save results
+    # with open(output_file, "w", encoding="utf-8") as file:
+    #     json.dump({
+    #         "results": results,
+    #         "aggregation": aggregation
+    #     }, file, indent=4)
     with open(output_file, "w", encoding="utf-8") as file:
-        json.dump({
-            "results": results,
-            "aggregation": aggregation
-        }, file, indent=4)
+        json.dump(data, file, indent=4)
     
     # Generate table
-    for metric in ["match_accuracy", "avg_f1"]:
-        table_generator(
-            input_file=output_file,
-            output_file=output_file.replace(".json", f"_{metric}.tex"),
-            metric=metric,
-        )
+    # for metric in ["match_accuracy", "avg_f1"]:
+    #     table_generator(
+    #         input_file=output_file,
+    #         output_file=output_file.replace(".json", f"_{metric}.tex"),
+    #         metric=metric,
+    #     )
     
     # delete checkpoint file
     if os.path.exists(checkpoint_file):
@@ -1080,6 +1132,8 @@ if __name__ == "__main__":
                        help="Skip locality evaluation")
     eval_group.add_argument("--predict_mask", action="store_true",
                        help="Predict masked tokens instead of span format")
+    eval_group.add_argument("--convert_questions", action="store_true",
+                       help="Convert question to span format")
     
     # RAG configuration
     rag_group = parser.add_argument_group("RAG Configuration")

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
@@ -9,7 +9,7 @@ export WANDB_PROJECT="wikidyk-ar"
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="train_results_pred_mask"
 BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=1
+GRADIENT_ACCUMULATION_STEPS=2
 LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
@@ -17,9 +17,9 @@ CHAT_MODE=false  # Set to true for chat mode
 NUM_UPSAMPLE=1000  # Default value for t5 models
 QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
-PREDICT_MASK=true
+PREDICT_MASK=false
 
-DS_SIZE_VALUES=(100 1000 3500)
+DS_SIZE_VALUES=(100 1000)
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -41,8 +41,7 @@ MODEL_NAMES=(
     # "downloaded_models/roberta-large"
     # "downloaded_models/t5-base"
     # "downloaded_models/flan-t5-xl"
-    # "meta-llama/Llama-3.2-1B"
-    "google/gemma-3-1b-pt"
+    "meta-llama/Llama-3.2-1B"
     # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
@@ -235,7 +234,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     log "Data Size: $DS_SIZE"
   
     # Log the full command
-    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29506 src/train.py \
+    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29501 src/train.py \
       --model_name_or_path \"$MODEL_NAME\" \
       --data_path \"$DATA_PATH\" \
       --output_dir \"$MODEL_OUTPUT_DIR\" \

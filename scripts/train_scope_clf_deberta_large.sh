@@ -1,23 +1,20 @@
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 export WANDB_PROJECT="wikidyk-scope-clf"
 
-MODEL_NAME="roberta-large"
+MODEL_NAME="YWZBrandon/wikidyk-scope-clf-deberta-v3-large-semantic_10_clusters"
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
 NUM_GPUS=$((NUM_GPUS + 1))
 
-EVAL_ONLY=false
+EVAL_ONLY=true
 EVAL_ONLY_FLAG=""
 if [ "$EVAL_ONLY" = true ]; then
     EVAL_ONLY_FLAG="--evaluate_only"
 fi
 
 data_types=(
-    "semantic_3_clusters"
-    "semantic_5_clusters"
     "semantic_10_clusters"
-    "1_cluster"
 )
 
 for data_type in "${data_types[@]}"; do

@@ -6,7 +6,7 @@ export CUDA_VISIBLE_DEVICES=2,3
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
-INPUT_FILE="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+INPUT_FILE="data/wikidyk2004-2009_03072025_gpt-4o_formatted.json"
 OUTPUT_DIR="eval_results"
 # Infer tensor parallel size and visible devices
 TENSOR_PARALLEL_SIZE=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -25,7 +25,11 @@ OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/meta-llama_Llama-2-7b-hf_qa_full_upsample1000"
+  "meta-llama/Llama-2-7b-hf"
+  "meta-llama/Llama-3.2-1B"
+  "meta-llama/Llama-3.1-8B"
+  "Qwen/Qwen2.5-1.5B"
+  "Qwen/Qwen2.5-7B"
 )
 
 # Create output directory
@@ -60,21 +64,21 @@ for MODEL_NAME in "${MODELS[@]}"; do
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
 
-  int_size=${MODEL_SIZE%%.*}
-  if (( int_size > 3 )); then
-    echo "Using LoRA for model size: $MODEL_SIZE"
-    PEFT=true
-  else
-    echo "Not using LoRA for model size: $MODEL_SIZE"
-    PEFT=false
-  fi
+#   int_size=${MODEL_SIZE%%.*}
+#   if (( int_size > 3 )); then
+#     echo "Using LoRA for model size: $MODEL_SIZE"
+#     PEFT=true
+#   else
+#     echo "Not using LoRA for model size: $MODEL_SIZE"
+#     PEFT=false
+#   fi
   
-  if ${PEFT}; then
-    PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
-    MODEL_NAME="$BASE_MODEL_NAME"
-  else
-    PEFT_FLAGS=""
-  fi
+#   if ${PEFT}; then
+#     PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
+#     MODEL_NAME="$BASE_MODEL_NAME"
+#   else
+#     PEFT_FLAGS=""
+#   fi
 
   # Handle DS_SIZE parameter
   DS_SIZE_FLAG=""
@@ -95,6 +99,7 @@ for MODEL_NAME in "${MODELS[@]}"; do
   CMD="python src/eval_qa.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
       --tensor_parallel_size $TENSOR_PARALLEL_SIZE \
       --gpu_memory_utilization $GPU_MEMORY_UTIL \
+      --output_dir \"$OUTPUT_DIR/${MODEL_NAME//\//_}\" \
       --max_new_tokens $MAX_NEW_TOKENS \
       --model_max_len $MODEL_MAX_LEN \
       $OVERWRITE_FLAG $PEFT_FLAGS $DS_SIZE_FLAG"

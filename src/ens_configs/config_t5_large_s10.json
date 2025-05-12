@@ -1,0 +1,18 @@
+{
+    "ens_prediction_results_path": {
+        "0": "eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_0_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "1": "eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_1_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "2": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_2_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "3": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_2_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "4": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_4_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "5": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_5_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "6": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_6_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "7": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_7_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "8": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_8_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "9": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_semantic_10_clusters_9_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json"
+    },
+    "classifier_results_path": "train_results/wikidyk-scope-clf-deberta-v3-large-semantic_10_clusters-eval-only/per_example_eval.jsonl",
+    "llm_prediction_results_path": "wikidyk_eval_results/meta-llama-Llama-3.1-8B/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+    "llm_model_name": "meta-llama/Llama-3.1-8B",
+    "ens_type": "classifier"
+}

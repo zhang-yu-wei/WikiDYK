@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES="0,1,2,3"
+export CUDA_VISIBLE_DEVICES="2,3"
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -23,11 +23,12 @@ PEFT=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_0_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_1_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_2_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_3_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_semantic_5_clusters_4_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_3_clusters_0_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_3_clusters_1_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_3_clusters_2_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_0_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_1_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_2_full_upsample1000"
 )
 BASE_MODEL_NAME=""
 
@@ -82,7 +83,7 @@ for MODEL_NAME in "${MODELS[@]}"; do
   CMD="accelerate launch \
       --num_processes $TENSOR_PARALLEL_SIZE \
       --num_machines 1 \
-      --main_process_port 29501 \
+      --main_process_port 29508 \
       src/eval_qa_accelerate.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
       --tensor_parallel_size $TENSOR_PARALLEL_SIZE \
       --gpu_memory_utilization $GPU_MEMORY_UTIL \

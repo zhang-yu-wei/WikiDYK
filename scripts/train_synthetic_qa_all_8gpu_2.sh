@@ -5,8 +5,11 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 export WANDB_PROJECT="wikidyk-ar"
 
+export HF_TOKEN="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"
+echo "$HF_TOKEN" | huggingface-cli login --token 2>/dev/null
+
 # Configuration variables (modify these according to your needs)
-DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
+DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_trainqas.json"
 OUTPUT_DIR="train_results_ar"
 BATCH_SIZE=32
 GRADIENT_ACCUMULATION_STEPS=1
@@ -37,13 +40,9 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "meta-llama/Llama-2-7b-hf"
-    "meta-llama/Llama-3.1-8B"
-    "meta-llama/Llama-3.2-1B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-7B"
-    # "google/gemma-3-1b-pt"
-    # "google/gemma-3-12b-pt"
+    "Qwen/Qwen2.5-7B"
+    "Qwen/Qwen2.5-1.5B"
+    "google/gemma-3-1b-pt"
 )
 
 # Function to extract model size in billions

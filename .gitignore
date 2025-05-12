@@ -2,6 +2,7 @@
 wandb/
 *data*/
 *run_script*.sh
+converted_questions/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

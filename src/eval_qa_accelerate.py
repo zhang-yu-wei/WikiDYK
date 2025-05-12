@@ -161,8 +161,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             continue
         
         if not args.no_reliability and 'reliability' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['reliability'] and "[MASK]" in datum['eval']['reliability']['masked_prompt']:
+                input_str = datum['eval']['reliability']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['reliability']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['reliability']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['reliability']['answer'],
                 question=datum['eval']['reliability']['prompt'],
                 fact=datum['fact'],
@@ -172,8 +176,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
         if not args.no_generality and 'generality' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['generality'] and "[MASK]" in datum['eval']['generality']['masked_prompt']:
+                input_str = datum['eval']['generality']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['generality']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['generality']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['generality']['answer'],
                 question=datum['eval']['generality']['prompt'],
                 fact=datum['fact'],
@@ -183,8 +191,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
         if not args.no_paraphrase and 'paraphrase' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['paraphrase'] and "[MASK]" in datum['eval']['paraphrase']['masked_prompt']:
+                input_str = datum['eval']['paraphrase']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['paraphrase']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['paraphrase']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['paraphrase']['answer'],
                 question=datum['eval']['paraphrase']['prompt'],
                 fact=datum['fact'],
@@ -194,8 +206,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
         if not args.no_portability and 'portability' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['portability'] and "[MASK]" in datum['eval']['portability']['masked_prompt']:
+                input_str = datum['eval']['portability']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['portability']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['portability']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['portability']['answer'],
                 question=datum['eval']['portability']['prompt'],
                 fact=datum['fact'],
@@ -205,8 +221,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
         if not args.no_counterfactual and 'counterfactual' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['counterfactual'] and "[MASK]" in datum['eval']['counterfactual']['masked_prompt']:
+                input_str = datum['eval']['counterfactual']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['counterfactual']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['counterfactual']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['counterfactual']['answer'],
                 question=datum['eval']['counterfactual']['prompt'],
                 fact=datum['fact'],
@@ -215,8 +235,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
                 case_id=case_id
             )
             eval_examples.append(example)
+            if 'masked_prompt' in datum['eval']['factual'] and "[MASK]" in datum['eval']['factual']['masked_prompt']:
+                input_str = datum['eval']['factual']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['factual']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['factual']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['factual']['answer'],
                 question=datum['eval']['factual']['prompt'],
                 fact=datum['fact'],
@@ -225,8 +249,12 @@ def prepare_evaluation_examples(data: Dict[str, Any], args: argparse.Namespace) 
             )
             eval_examples.append(example)
         if not args.no_locality and 'locality' in datum['eval']:
+            if 'masked_prompt' in datum['eval']['locality'] and "[MASK]" in datum['eval']['locality']['masked_prompt']:
+                input_str = datum['eval']['locality']['masked_prompt']
+            else:
+                input_str = PROMPT_TEMPLATE.format(input_str=datum['eval']['locality']['prompt'])
             example = Example(
-                input_str=PROMPT_TEMPLATE.format(input_str=datum['eval']['locality']['prompt']),
+                input_str=input_str,
                 expected_output=datum['eval']['locality']['answer'],
                 question=datum['eval']['locality']['prompt'],
                 fact=datum['fact'],
@@ -477,7 +505,10 @@ def predict_with_t5(model, tokenizer, question, max_length=50):
         str: Predicted answer
     """
     # Add sentinel token to mark where prediction should occur
-    input_text = f"{question}<extra_id_0>"
+    if "[MASK]" in question:
+        input_text = question.replace("[MASK]", "<extra_id_0>")
+    else:
+        input_text = f"{question}<extra_id_0>"
     # input_text = "<extra_id_0> built both an island of trash and an island of hope"
     
     # Tokenize input text

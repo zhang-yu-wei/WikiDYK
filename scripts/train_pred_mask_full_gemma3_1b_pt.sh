@@ -1,15 +1,18 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
+export HF_TOKEN="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"
+echo "$HF_TOKEN" | huggingface-cli login --token 2>/dev/null
+
 # Configuration variables (modify these according to your needs)
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
-OUTPUT_DIR="train_results_ar"
-BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=1
+OUTPUT_DIR="train_results_pred_mask"
+BATCH_SIZE=16
+GRADIENT_ACCUMULATION_STEPS=2
 LEARNING_RATE=2e-5
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
@@ -18,7 +21,7 @@ NUM_UPSAMPLE=1000  # Default value for t5 models
 QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
 DS_SIZE=-1  # Default to using all data (-1 means no limit)
-PREDICT_MASK=false
+PREDICT_MASK=true
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -37,13 +40,20 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
+    # "downloaded_models/roberta-large"
+    # "downloaded_models/t5-base"
+    # "downloaded_models/flan-t5-xl"
+    # "meta-llama/Llama-3.2-1B"
+    # "downloaded_models/Qwen2.5-7B"
     # "meta-llama/Llama-2-7b-hf"
-    "meta-llama/Llama-3.1-8B"
-    "meta-llama/Llama-3.2-1B"
+    # "meta-llama/Llama-3.2-3B"
+    # "meta-llama/Llama-3.1-8B"
+    "google/gemma-3-1b"
+    # "Qwen/Qwen2.5-0.5B"
     # "Qwen/Qwen2.5-1.5B"
+    # "Qwen/Qwen2.5-3B"
     # "Qwen/Qwen2.5-7B"
-    # "google/gemma-3-1b-pt"
-    # "google/gemma-3-12b-pt"
+    # "Qwen/Qwen2.5-14B"
 )
 
 # Function to extract model size in billions
@@ -124,7 +134,6 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
-  echo "Model size: $MODEL_SIZE B"
   LORA_FLAGS=""
   
   int_size=${MODEL_SIZE%%.*}
@@ -167,7 +176,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   log "Data Size: $DS_SIZE"
   
   # Log the full command
-  TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29503 src/train.py \
+  TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29502 src/train.py \
     --model_name_or_path \"$MODEL_NAME\" \
     --data_path \"$DATA_PATH\" \
     --output_dir \"$MODEL_OUTPUT_DIR\" \
@@ -177,7 +186,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     --learning_rate \"$LEARNING_RATE\" \
     --num_train_epochs \"$NUM_EPOCHS\" \
     --model_max_length \"$MODEL_MAX_LENGTH\" \
-    --report_to wandb --logging_steps 50 --save_strategy no \
+    --report_to wandb --logging_steps 50 --save_steps 10000 --save_total_limit 3 \
+    --resume_from_checkpoint True \
     --bf16 True --use_flash_attention_2 True \
     --qa_data_ratio \"$QA_DATA_RATIO\" \
     --predict_mask \"$PREDICT_MASK\" \

@@ -2,10 +2,11 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES="0,1,2,3"
+export CUDA_VISIBLE_DEVICES="2,3"
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
+# INPUT_FILE="converted_questions/Qwen-Qwen2.5-7B-Instruct_evalds100/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json"
 INPUT_FILE="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="eval_results"
 # Infer tensor parallel size and visible devices
@@ -23,16 +24,11 @@ PEFT=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/google_flan-t5-large_semantic_10_clusters_0_full_upsample1000"
-    "YWZBrandon/google_flan-t5-large_semantic_10_clusters_1_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_2_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_3_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_4_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_5_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_6_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_7_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_8_full_upsample1000"
-    # "YWZBrandon/google_flan-t5-large_semantic_10_clusters_9_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_semantic_10_clusters_9_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_3_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_4_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_10_clusters_0_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_10_clusters_1_full_upsample1000"
 )
 BASE_MODEL_NAME=""
 

@@ -7,7 +7,7 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
 INPUT_FILE="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
-OUTPUT_DIR="eval_results"
+OUTPUT_DIR="converted_questions"
 # Infer tensor parallel size and visible devices
 TENSOR_PARALLEL_SIZE=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
 TENSOR_PARALLEL_SIZE=$((TENSOR_PARALLEL_SIZE + 1))
@@ -15,17 +15,18 @@ GPU_MEMORY_UTIL=0.90
 MAX_NEW_TOKENS=256
 MODEL_MAX_LEN=1024
 RAG_TOP_K=0
-USE_CHAT_MODE=false
+USE_CHAT_MODE=true
 PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=-1
+DS_SIZE=100
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/meta-llama_Llama-2-7b-hf_qa_full_upsample1000"
+#   "meta-llama/Llama-3.1-8B-Instruct"
+    "Qwen/Qwen2.5-14B-Instruct"
 )
 
 # Create output directory
@@ -60,14 +61,14 @@ for MODEL_NAME in "${MODELS[@]}"; do
   # Check if model size is over 3B to use LoRA
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
 
-  int_size=${MODEL_SIZE%%.*}
-  if (( int_size > 3 )); then
-    echo "Using LoRA for model size: $MODEL_SIZE"
-    PEFT=true
-  else
-    echo "Not using LoRA for model size: $MODEL_SIZE"
-    PEFT=false
-  fi
+#   int_size=${MODEL_SIZE%%.*}
+#   if (( int_size > 3 )); then
+#     echo "Using LoRA for model size: $MODEL_SIZE"
+#     PEFT=true
+#   else
+#     echo "Not using LoRA for model size: $MODEL_SIZE"
+#     PEFT=false
+#   fi
   
   if ${PEFT}; then
     PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
@@ -92,11 +93,13 @@ for MODEL_NAME in "${MODELS[@]}"; do
   fi
   
   # Build command
-  CMD="python src/eval_qa.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
+  CMD="python src/llm_convert_questions.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
       --tensor_parallel_size $TENSOR_PARALLEL_SIZE \
       --gpu_memory_utilization $GPU_MEMORY_UTIL \
       --max_new_tokens $MAX_NEW_TOKENS \
       --model_max_len $MODEL_MAX_LEN \
+      --output_dir \"$OUTPUT_DIR\" \
+      --convert_questions \
       $OVERWRITE_FLAG $PEFT_FLAGS $DS_SIZE_FLAG"
   
   # Add chat mode for all models
