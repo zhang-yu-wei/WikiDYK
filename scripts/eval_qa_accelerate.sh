@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES="2,3"
+export CUDA_VISIBLE_DEVICES="0,1,2,3"
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -17,18 +17,16 @@ MAX_NEW_TOKENS=256
 MODEL_MAX_LEN=1024
 RAG_TOP_K=0
 USE_CHAT_MODE=false
-DS_SIZE=-1
+DS_SIZE=100
 PREDICT_MASK=false
 OVERWRITE=false
 PEFT=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/google_flan-t5-base_semantic_10_clusters_9_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_3_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_temporal_5_clusters_4_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_temporal_10_clusters_0_full_upsample1000"
-    "YWZBrandon/google_flan-t5-base_temporal_10_clusters_1_full_upsample1000"
+    # "YWZBrandon/google-t5_t5-large_ds100_upsample1000"
+    "YWZBrandon/google_t5-v1_1-large_ds100_upsample1000"
+    "YWZBrandon/roberta-large_ds100_upsample1000"
 )
 BASE_MODEL_NAME=""
 

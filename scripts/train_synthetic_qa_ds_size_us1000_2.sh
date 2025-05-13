@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
@@ -19,7 +19,7 @@ QA_FORMAT_DATA_PATH=
 QA_DATA_RATIO=-1  # Ratio of QA data to use
 PREDICT_MASK=false
 
-DS_SIZE_VALUES=(1000)
+DS_SIZE_VALUES=(3500)
 
 # infer nprocess_per_node from CUDA_VISIBLE_DEVICES
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
@@ -47,16 +47,16 @@ MODEL_NAMES=(
     # "meta-llama/Llama-2-7b-hf"
     # "downloaded_models/Qwen2.5-3B"
     # "downloaded_models/Qwen2.5-7B"
-    # "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
-    # "meta-llama/Llama-3.1-8B"
-    # "meta-llama/Llama-3.2-1B"
+    "meta-llama/Llama-3.1-8B"
+    "meta-llama/Llama-3.2-1B"
     # "Qwen/Qwen2.5-0.5B"
-    # "Qwen/Qwen2.5-1.5B"
+    "Qwen/Qwen2.5-1.5B"
     # "Qwen/Qwen2.5-3B"
-    # "Qwen/Qwen2.5-7B"
+    "Qwen/Qwen2.5-7B"
     # "Qwen/Qwen2.5-14B"
-    "google/gemma-3-1b-pt"
+    "google/gemma3-1b-pt"
 )
 
 # Function to extract model size in billions
@@ -250,7 +250,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     log "Data Size: $DS_SIZE"
   
     # Log the full command
-    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29581 src/train.py \
+    TRAIN_CMD="torchrun --nproc_per_node \"$NUM_GPUS\" --master-port 29582 src/train.py \
       --model_name_or_path \"$MODEL_NAME\" \
       --data_path \"$DATA_PATH\" \
       --output_dir \"$MODEL_OUTPUT_DIR\" \

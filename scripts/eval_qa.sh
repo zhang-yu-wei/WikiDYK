@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=2
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -20,12 +20,13 @@ PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=-1
+DS_SIZE=100
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/meta-llama_Llama-2-7b-hf_qa_full_upsample1000"
+    # "YWZBrandon/meta-llama_Llama-2-7b-hf_qa_full_upsample1000"
+    "YWZBrandon/roberta-large_ds100_upsample1000"
 )
 
 # Create output directory

@@ -38,20 +38,9 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "downloaded_models/roberta-large"
-    # "downloaded_models/t5-base"
-    # "downloaded_models/flan-t5-xl"
-    "google-t5/t5-large"
+    # "google-t5/t5-large"
+    "google/t5-v1_1-large"
     "roberta-large"
-    # "downloaded_models/Qwen2.5-7B"
-    # "meta-llama/Llama-2-7b-hf"
-    # "meta-llama/Llama-3.2-3B"
-    # "meta-llama/Llama-3.1-8B"
-    # "Qwen/Qwen2.5-0.5B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-3B"
-    # "Qwen/Qwen2.5-7B"
-    # "Qwen/Qwen2.5-14B"
 )
 
 # Function to extract model size in billions
@@ -161,6 +150,14 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
+    elif [[ "$MODEL_NAME" == *"t5-v1_1-large"* ]]; then
+      LEARNING_RATE=1e-4
+      BATCH_SIZE=64
+      GRADIENT_ACCUMULATION_STEPS=1
+      log "Adjusted parameters for t5 model:"
+      log "  - LEARNING_RATE: $LEARNING_RATE"
+      log "  - BATCH_SIZE: $BATCH_SIZE"
+      log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-xl"* ]]; then
       LEARNING_RATE=3e-4
       BATCH_SIZE=32
@@ -197,7 +194,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"roberta-large"* ]]; then
       LEARNING_RATE=1e-5
-      BATCH_SIZE=512
+      BATCH_SIZE=64
       GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for roberta model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
