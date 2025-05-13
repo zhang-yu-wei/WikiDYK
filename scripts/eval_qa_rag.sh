@@ -2,12 +2,12 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
 INPUT_FILE="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
-OUTPUT_DIR="eval_results_v2"
+OUTPUT_DIR="eval_results"
 # Infer tensor parallel size and visible devices
 TENSOR_PARALLEL_SIZE=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
 TENSOR_PARALLEL_SIZE=$((TENSOR_PARALLEL_SIZE + 1))
@@ -20,10 +20,11 @@ USE_CHAT_MODE=false
 # Models to evaluate
 MODELS=(
 #   "meta-llama/Llama-2-7b-hf"
-  "meta-llama/Llama-3.2-1B"
-  "meta-llama/Llama-3.1-8B"
-  "Qwen/Qwen2.5-1.5B"
-  "Qwen/Qwen2.5-7B"
+#   "meta-llama/Llama-3.2-1B"
+#   "meta-llama/Llama-3.1-8B"
+#   "Qwen/Qwen2.5-1.5B"
+#   "Qwen/Qwen2.5-7B"
+   "google/gemma-3-1b-pt"
 )
 
 # Create output directory
