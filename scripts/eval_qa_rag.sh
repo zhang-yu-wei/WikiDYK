@@ -19,11 +19,11 @@ USE_CHAT_MODE=false
 
 # Models to evaluate
 MODELS=(
-#   "meta-llama/Llama-2-7b-hf"
-#   "meta-llama/Llama-3.2-1B"
-#   "meta-llama/Llama-3.1-8B"
-#   "Qwen/Qwen2.5-1.5B"
-#   "Qwen/Qwen2.5-7B"
+   "meta-llama/Llama-2-7b-hf"
+   "meta-llama/Llama-3.2-1B"
+   "meta-llama/Llama-3.1-8B"
+   "Qwen/Qwen2.5-1.5B"
+   "Qwen/Qwen2.5-7B"
    "google/gemma-3-1b-pt"
 )
 

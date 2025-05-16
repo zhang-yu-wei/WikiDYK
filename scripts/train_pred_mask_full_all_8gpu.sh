@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 export WANDB_PROJECT="wikidyk-ar"
 
@@ -9,7 +9,7 @@ export WANDB_PROJECT="wikidyk-ar"
 DATA_PATH="/data/yuwei/WikiDYK/data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
 OUTPUT_DIR="train_results_pred_mask"
 BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=2
+GRADIENT_ACCUMULATION_STEPS=1
 LEARNING_RATE=2e-6
 NUM_EPOCHS=1
 MODEL_MAX_LENGTH=32768
@@ -37,18 +37,12 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "downloaded_models/roberta-large"
-    # "downloaded_models/t5-base"
-    # "downloaded_models/flan-t5-xl"
-    "/data/yuwei/WikiDYK/downloaded_models/Llama-3.2-3B"
-    # "meta-llama/Llama-2-7b-hf"
-    # "meta-llama/Llama-3.2-3B"
-    # "meta-llama/Llama-3.1-8B"
-    # "Qwen/Qwen2.5-0.5B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-3B"
-    # "Qwen/Qwen2.5-7B"
-    # "Qwen/Qwen2.5-14B"
+    "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-3.1-8B"
+    "meta-llama/Llama-3.2-1B"
+    "Qwen/Qwen2.5-1.5B"
+    "Qwen/Qwen2.5-7B"
+    "google/gemma-3-1b-pt"
 )
 
 # Function to extract model size in billions
@@ -131,7 +125,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
   LORA_FLAGS=""
   
-  if (( $(echo "$MODEL_SIZE > 3" | bc -l) )); then
+  int_size=${MODEL_SIZE%%.*}
+  if (( int_size > 3 )); then
     log "Model size is over 3B ($MODEL_SIZE B). Using LoRA training."
     LORA_FLAGS="--use_lora --lora_r $LORA_R --lora_alpha $LORA_ALPHA"
     LEARNING_RATE=2e-4
@@ -195,15 +190,6 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
     BATCH_SIZE=512
     GRADIENT_ACCUMULATION_STEPS=1
     log "Adjusted parameters for roberta model:"
-    log "  - LEARNING_RATE: $LEARNING_RATE"
-    log "  - BATCH_SIZE: $BATCH_SIZE"
-    log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
-  fi
-
-  if [[ "$MODEL_NAME" == *"Llama-3.2-1B"* ]]; then
-    BATCH_SIZE=128
-    GRADIENT_ACCUMULATION_STEPS=1
-    log "Adjusted parameters for Llama model:"
     log "  - LEARNING_RATE: $LEARNING_RATE"
     log "  - BATCH_SIZE: $BATCH_SIZE"
     log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"

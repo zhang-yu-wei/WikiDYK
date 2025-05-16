@@ -37,13 +37,12 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-2-7b-hf"
     "meta-llama/Llama-3.1-8B"
     "meta-llama/Llama-3.2-1B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-7B"
-    # "google/gemma-3-1b-pt"
-    # "google/gemma-3-12b-pt"
+    "Qwen/Qwen2.5-1.5B"
+    "Qwen/Qwen2.5-7B"
+    "google/gemma-3-1b-pt"
 )
 
 # Function to extract model size in billions

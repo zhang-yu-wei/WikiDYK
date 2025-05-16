@@ -5,7 +5,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 export WANDB_PROJECT="wikidyk-ar"
 
-export HF_TOKEN="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"
+export HF_TOKEN=[YOUR_HF_TOKEN]
 echo "$HF_TOKEN" | huggingface-cli login --token 2>/dev/null
 
 # Configuration variables (modify these according to your needs)

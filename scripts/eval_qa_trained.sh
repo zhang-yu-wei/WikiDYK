@@ -20,13 +20,12 @@ PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=100
+DS_SIZE=-1
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    "YWZBrandon/google_gemma-3-1b-pt_qa_ds100_upsample1000"
-    "YWZBrandon/meta-llama_Llama-3.2-1B_qa_ds100_upsample1000"
+    "MODEL_NAME_OR_PATH"
 )
 
 # Create output directory

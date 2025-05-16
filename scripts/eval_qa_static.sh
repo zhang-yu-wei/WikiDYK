@@ -2,12 +2,12 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES=2,3
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
 INPUT_FILE="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2.json"
-OUTPUT_DIR="converted_questions"
+OUTPUT_DIR="eval_results"
 # Infer tensor parallel size and visible devices
 TENSOR_PARALLEL_SIZE=$(echo $CUDA_VISIBLE_DEVICES | tr -cd ',' | wc -c)
 TENSOR_PARALLEL_SIZE=$((TENSOR_PARALLEL_SIZE + 1))
@@ -15,18 +15,22 @@ GPU_MEMORY_UTIL=0.90
 MAX_NEW_TOKENS=256
 MODEL_MAX_LEN=1024
 RAG_TOP_K=0
-USE_CHAT_MODE=true
+USE_CHAT_MODE=false
 PEFT=false
 # Use base model name for LoRA
 BASE_MODEL_NAME=""
 # ===== Modify the following parameters as needed =====
-DS_SIZE=100
+DS_SIZE=-1
 OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-#   "meta-llama/Llama-3.1-8B-Instruct"
-    "Qwen/Qwen2.5-14B-Instruct"
+    "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-3.1-8B"
+    "meta-llama/Llama-3.2-1B"
+    "Qwen/Qwen-2.5-1.5B"
+    "Qwen/Qwen-2.5-7B"
+    "google/gemma-3-1b-pt"
 )
 
 # Create output directory
@@ -59,7 +63,7 @@ for MODEL_NAME in "${MODELS[@]}"; do
   fi
 
   # Check if model size is over 3B to use LoRA
-  MODEL_SIZE=$(get_model_size "$MODEL_NAME")
+#   MODEL_SIZE=$(get_model_size "$MODEL_NAME")
 
 #   int_size=${MODEL_SIZE%%.*}
 #   if (( int_size > 3 )); then
@@ -70,12 +74,12 @@ for MODEL_NAME in "${MODELS[@]}"; do
 #     PEFT=false
 #   fi
   
-  if ${PEFT}; then
-    PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
-    MODEL_NAME="$BASE_MODEL_NAME"
-  else
-    PEFT_FLAGS=""
-  fi
+#   if ${PEFT}; then
+#     PEFT_FLAGS="--peft --peft_path $MODEL_NAME"
+#     MODEL_NAME="$BASE_MODEL_NAME"
+#   else
+#     PEFT_FLAGS=""
+#   fi
 
   # Handle DS_SIZE parameter
   DS_SIZE_FLAG=""
@@ -93,13 +97,11 @@ for MODEL_NAME in "${MODELS[@]}"; do
   fi
   
   # Build command
-  CMD="python src/llm_convert_questions.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
+  CMD="python src/eval_qa.py --model_name \"$MODEL_NAME\" --input_file \"$INPUT_FILE\" \
       --tensor_parallel_size $TENSOR_PARALLEL_SIZE \
       --gpu_memory_utilization $GPU_MEMORY_UTIL \
       --max_new_tokens $MAX_NEW_TOKENS \
       --model_max_len $MODEL_MAX_LEN \
-      --output_dir \"$OUTPUT_DIR\" \
-      --convert_questions \
       $OVERWRITE_FLAG $PEFT_FLAGS $DS_SIZE_FLAG"
   
   # Add chat mode for all models
