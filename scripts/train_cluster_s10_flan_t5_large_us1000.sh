@@ -1,33 +1,22 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
 DATA_PATHS=(
-    # "data/scope_clf_data/semantic_10_clusters_0.json"
-    # "data/scope_clf_data/semantic_10_clusters_1.json"
-    # "data/scope_clf_data/semantic_10_clusters_2.json"
-    # "data/scope_clf_data/semantic_10_clusters_3.json"
-    # "data/scope_clf_data/semantic_10_clusters_4.json"
-    # "data/scope_clf_data/semantic_10_clusters_5.json"
-    # "data/scope_clf_data/semantic_10_clusters_6.json"
-    # "data/scope_clf_data/semantic_10_clusters_7.json"
-    # "data/scope_clf_data/semantic_10_clusters_8.json"
-    # "data/scope_clf_data/semantic_10_clusters_9.json"
-    # "data/scope_clf_data/temporal_3_clusters_1.json"
-    "data/scope_clf_data/temporal_10_clusters_0.json"
-    "data/scope_clf_data/temporal_10_clusters_1.json"
-    "data/scope_clf_data/temporal_10_clusters_2.json"
-    "data/scope_clf_data/temporal_10_clusters_3.json"
-    "data/scope_clf_data/temporal_10_clusters_4.json"
-    # "data/scope_clf_data/temporal_10_clusters_5.json"
-    # "data/scope_clf_data/temporal_10_clusters_6.json"
-    # "data/scope_clf_data/temporal_10_clusters_7.json"
-    # "data/scope_clf_data/temporal_10_clusters_8.json"
-    # "data/scope_clf_data/temporal_10_clusters_9.json"
+    "data/scope_clf_data/semantic_10_clusters_0.json"
+    "data/scope_clf_data/semantic_10_clusters_1.json"
+    "data/scope_clf_data/semantic_10_clusters_2.json"
+    "data/scope_clf_data/semantic_10_clusters_3.json"
+    "data/scope_clf_data/semantic_10_clusters_4.json"
+    "data/scope_clf_data/semantic_10_clusters_5.json"
+    "data/scope_clf_data/semantic_10_clusters_6.json"
+    "data/scope_clf_data/semantic_10_clusters_7.json"
+    "data/scope_clf_data/semantic_10_clusters_8.json"
+    "data/scope_clf_data/semantic_10_clusters_9.json"
 )
 OUTPUT_DIR="train_results"
 BATCH_SIZE=32
@@ -59,19 +48,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Define models to run
 # You can add or remove models from this array
 MODEL_NAMES=(
-    # "downloaded_models/roberta-large"
-    # "downloaded_models/t5-base"
-    # "downloaded_models/flan-t5-xl"
     "google/flan-t5-large"
-    # "downloaded_models/Qwen2.5-7B"
-    # "meta-llama/Llama-2-7b-hf"
-    # "meta-llama/Llama-3.2-3B"
-    # "meta-llama/Llama-3.1-8B"
-    # "Qwen/Qwen2.5-0.5B"
-    # "Qwen/Qwen2.5-1.5B"
-    # "Qwen/Qwen2.5-3B"
-    # "Qwen/Qwen2.5-7B"
-    # "Qwen/Qwen2.5-14B"
 )
 
 # Function to extract model size in billions
@@ -167,7 +144,7 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
 
     if [[ "$MODEL_NAME" == *"t5-base"* ]]; then
       LEARNING_RATE=3e-4
-      BATCH_SIZE=128
+      BATCH_SIZE=64
       GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
@@ -175,8 +152,8 @@ for MODEL_NAME in "${MODEL_NAMES[@]}"; do
       log "  - GRADIENT_ACCUMULATION_STEPS: $GRADIENT_ACCUMULATION_STEPS"
     elif [[ "$MODEL_NAME" == *"t5-large"* ]]; then
       LEARNING_RATE=1e-4
-      BATCH_SIZE=16
-      GRADIENT_ACCUMULATION_STEPS=2
+      BATCH_SIZE=64
+      GRADIENT_ACCUMULATION_STEPS=1
       log "Adjusted parameters for t5 model:"
       log "  - LEARNING_RATE: $LEARNING_RATE"
       log "  - BATCH_SIZE: $BATCH_SIZE"

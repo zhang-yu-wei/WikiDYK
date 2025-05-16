@@ -77,6 +77,15 @@ bash scripts/eval_qa_accelerate.sh
 
 ### Ensemble Model
 To train scope classifier, use the following script
-```
+```bash
 bash scripts/train_scope_clf_deberta_large.sh
+```
+To train models on clustered data, use the following script
+```bash
+bash scripts/train_cluster_s10_flan_t5_base_us1000.sh
+bash scripts/train_cluster_s10_flan_t5_large_us1000.sh
+```
+Then evaluate the trained models with `eval_qa_accelerate.sh`. Modify the ensemble config in `src/ens_configs/config_t5_base_s10.json` and `src/ens_configs/config_t5_large_s10.json`. Then evaluate the ensemble pipeline via
+```bash
+python src/ensemble_pipeline.py --ens_config src/ens_configs/config_t5_large_s10.json --no_factual
 ```
