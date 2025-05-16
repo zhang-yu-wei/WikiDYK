@@ -1,0 +1,11 @@
+{
+    "ens_prediction_results_path": {
+        "0": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_temporal_3_clusters_0_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "1": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_temporal_3_clusters_1_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+        "2": "wikidyk_eval_results/YWZBrandon-google_flan-t5-large_temporal_3_clusters_2_full_upsample1000/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json"
+    },
+    "classifier_results_path": "wikidyk_eval_results/wikidyk-scope-clf-deberta-v3-large-temporal_3_clusters-eval-only/per_example_eval.jsonl",
+    "llm_prediction_results_path": "wikidyk_eval_results/meta-llama-Llama-3.1-8B/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_eval.json",
+    "llm_model_name": "meta-llama/Llama-3.1-8B",
+    "ens_type": "classifier"
+}

@@ -2,7 +2,7 @@
 
 # Language Model Evaluation Script for Multiple Models
 # This script runs the language model evaluation on WikiDYK data for multiple models
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Input file and common parameters
@@ -25,8 +25,8 @@ OVERWRITE=false
 
 # Models to evaluate
 MODELS=(
-    # "YWZBrandon/meta-llama_Llama-2-7b-hf_qa_full_upsample1000"
-    "YWZBrandon/roberta-large_ds100_upsample1000"
+    "YWZBrandon/google_gemma-3-1b-pt_qa_ds100_upsample1000"
+    "YWZBrandon/meta-llama_Llama-3.2-1B_qa_ds100_upsample1000"
 )
 
 # Create output directory

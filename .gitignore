@@ -3,6 +3,13 @@ wandb/
 *data*/
 *run_script*.sh
 converted_questions/
+figure/
+draw*.py
+get_croissant.py
+upload_dataset.py
+YWZBrandon/
+croissant.jsonld
+croissant-checker/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Set the GPU device from the argument
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 export WANDB_PROJECT="wikidyk-ar"
 
 # Configuration variables (modify these according to your needs)
 DATA_PATH="data/wikidyk2022-2025_01082025_gpt-4o_evalv2_pages_formatted_combined_v2_trainqas.json"
 OUTPUT_DIR="train_results_pred_mask"
-BATCH_SIZE=32
+BATCH_SIZE=16
 GRADIENT_ACCUMULATION_STEPS=2
 LEARNING_RATE=2e-5
 NUM_EPOCHS=1
@@ -47,7 +47,7 @@ MODEL_NAMES=(
     # "meta-llama/Llama-2-7b-hf"
     # "downloaded_models/Qwen2.5-3B"
     # "downloaded_models/Qwen2.5-7B"
-    # "meta-llama/Llama-2-7b-hf"
+    "meta-llama/Llama-2-7b-hf"
     # "meta-llama/Llama-3.2-3B"
     # "meta-llama/Llama-3.1-8B"
     # "meta-llama/Llama-3.2-1B"
@@ -56,7 +56,7 @@ MODEL_NAMES=(
     # "Qwen/Qwen2.5-3B"
     # "Qwen/Qwen2.5-7B"
     # "Qwen/Qwen2.5-14B"
-    "google/gemma-3-1b-pt"
+    # "google/gemma-3-1b-pt"
 )
 
 # Function to extract model size in billions

@@ -17,16 +17,23 @@ MAX_NEW_TOKENS=256
 MODEL_MAX_LEN=1024
 RAG_TOP_K=0
 USE_CHAT_MODE=false
-DS_SIZE=100
+DS_SIZE=-1
 PREDICT_MASK=false
 OVERWRITE=false
 PEFT=false
 
 # Models to evaluate
 MODELS=(
-    # "YWZBrandon/google-t5_t5-large_ds100_upsample1000"
-    "YWZBrandon/google_t5-v1_1-large_ds100_upsample1000"
-    "YWZBrandon/roberta-large_ds100_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_0_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_1_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_2_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_3_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_4_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_5_full_upsample1000"
+    "YWZBrandon/google_flan-t5-base_temporal_10_clusters_6_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_7_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_8_full_upsample1000"
+    # "YWZBrandon/google_flan-t5-large_temporal_10_clusters_9_full_upsample1000"
 )
 BASE_MODEL_NAME=""
 
